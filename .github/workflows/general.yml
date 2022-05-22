@@ -10,13 +10,25 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        id: cache-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
         with:
           command: test
 
@@ -30,7 +42,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup component add rustfmt
+          components: rustfmt
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -40,17 +52,21 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
+          components: clippy
           toolchain: stable
           override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-targets --all-features
+          args: --all-targets --all-features -- -D warnings
 
   coverage:
     name: Code coverage
@@ -68,12 +84,13 @@ jobs:
         uses: actions-rs/tarpaulin@v0.1
         with:
           version: "0.15.0"
-          args: "--ignore-tests"
+          args: --ignore-tests
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           fail_ci_if_error: true
+          verbose: true
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
