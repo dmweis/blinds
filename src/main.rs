@@ -103,6 +103,7 @@ impl BlindsDriver {
         Ok(())
     }
 
+    #[allow(dead_code)]
     async fn reset_motors(&mut self) -> Result<()> {
         self.driver.reset(lss_driver::BROADCAST_ID).await?;
         sleep(Duration::from_secs(2)).await;
@@ -156,6 +157,7 @@ impl BlindsDriver {
         Ok(())
     }
 
+    #[allow(dead_code)]
     async fn flip_close_right(&mut self) -> Result<()> {
         self.driver
             .move_to_position_with_modifier(
