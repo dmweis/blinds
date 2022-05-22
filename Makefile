@@ -14,3 +14,8 @@ build:
 deploy: build
 	@echo "Sending $(ARM_BUILD_PATH) to $(TARGET_HOST):$(REMOTE_DIRECTORY)"
 	rsync -avz --delete $(ARM_BUILD_PATH) $(TARGET_HOST):$(REMOTE_DIRECTORY)
+
+
+.PHONY: debug
+debug:
+	cargo run -- --config dev_config/config.yaml
