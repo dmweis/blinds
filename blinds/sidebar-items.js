@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["main",""]],"mod":[["config",""],["driver",""],["error",""]],"struct":[["Args",""]]});
+initSidebarItems({"fn":[["main",""]],"mod":[["config",""],["driver",""],["error",""]],"struct":[["Args",""],["close_blinds_handler",""],["open_blinds_handler",""]]});
