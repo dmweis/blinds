@@ -2,11 +2,24 @@
 name = "blinds"
 version = "0.1.0"
 edition = "2021"
+public = false
+authors = ["David Weis <dweis7@gmail.com>"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "3.1.18", features = ["derive"] }
 lss_driver = { git = "https://github.com/dmweis/lss_driver", branch = "main" }
-tokio = { version = "1.18", features = ["macros", "time", "rt-multi-thread"] }
-anyhow = "*"
+tokio = { version = "1.18", features = [
+    "macros",
+    "time",
+    "rt-multi-thread",
+    "fs",
+    "io-util",
+] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4.17"
+simplelog = "0.12.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+directories = "4.0"
