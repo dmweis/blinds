@@ -2,12 +2,14 @@ mod config;
 mod driver;
 mod error;
 
+use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use clap::Parser;
 use config::BlindsDriverConfig;
 use driver::BlindsDriver;
 use log::*;
 use std::{path::PathBuf, time::Duration};
+use tokio::sync::Mutex;
 use tokio::time::sleep;
 
 #[derive(Parser, Debug)]
@@ -19,10 +21,29 @@ struct Args {
     /// create default config
     #[clap(long)]
     create_default_config: bool,
-
     /// start with calibration
     #[clap(long)]
     run_calibration: bool,
+}
+
+#[post("/open_blinds")]
+async fn open_blinds_handler(driver: web::Data<Mutex<BlindsDriver>>) -> impl Responder {
+    let mut driver = driver.lock().await;
+    if driver.open().await.is_ok() {
+        HttpResponse::Ok().finish()
+    } else {
+        HttpResponse::InternalServerError().finish()
+    }
+}
+
+#[post("/close_blinds")]
+async fn close_blinds_handler(driver: web::Data<Mutex<BlindsDriver>>) -> impl Responder {
+    let mut driver = driver.lock().await;
+    if driver.close().await.is_ok() {
+        HttpResponse::Ok().finish()
+    } else {
+        HttpResponse::InternalServerError().finish()
+    }
 }
 
 #[tokio::main]
@@ -48,7 +69,6 @@ async fn main() -> Result<()> {
     let mut driver = BlindsDriver::new(config).await?;
 
     let were_motors_rebooted = driver.were_motors_rebooted().await?;
-
     if args.run_calibration || were_motors_rebooted {
         if were_motors_rebooted {
             warn!("Motors seems to have been rebooted since the last run.");
@@ -62,16 +82,19 @@ async fn main() -> Result<()> {
         driver.configure().await?;
     }
 
-    if driver.were_motors_rebooted().await? {
-        info!("Motors were rebooted");
-    } else {
-        info!("Motors were NOT rebooted");
-    }
+    let address = format!("{}:{}", "0.0.0.0", 8080);
+    let driver = web::Data::new(Mutex::new(driver));
 
-    driver.open().await?;
-    sleep(Duration::from_secs(2)).await;
-    driver.close().await?;
-
+    HttpServer::new(move || {
+        let driver = driver.clone();
+        App::new()
+            .service(open_blinds_handler)
+            .service(close_blinds_handler)
+            .app_data(driver)
+    })
+    .bind(address)?
+    .run()
+    .await?;
     Ok(())
 }
 
