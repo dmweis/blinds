@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["CALIBRATED_COLOR",""],["SLIDING_CURRENT_LIMIT",""],["SLIDING_SPEED",""],["UNCALIBRATED_COLOR",""]],"struct":[["BlindsDriver",""]]});
