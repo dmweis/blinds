@@ -10,7 +10,7 @@ pub struct BlindsDriver {
 }
 
 const UNCALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Magenta;
-const CALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Cyan;
+const CALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Off;
 const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
     lss_driver::CommandModifier::CurrentLimp(400);
 const SLIDING_SPEED: f32 = 340.0;
