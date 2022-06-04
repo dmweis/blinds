@@ -320,6 +320,55 @@
 <span id="315">315</span>
 <span id="316">316</span>
 <span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">config</span>::{<span class="ident">BedroomBlindsConfig</span>, <span class="ident">LivingRoomBlindsConfig</span>},
     <span class="ident">error</span>,
@@ -327,8 +376,8 @@
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::path::Path</span>;
 <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path::Path</span>, <span class="ident">time::Instant</span>};
 <span class="kw">use</span> <span class="ident">tokio::time::sleep</span>;
 
 <span class="kw">const</span> <span class="ident">UNCALIBRATED_COLOR</span>: <span class="ident">lss_driver::LedColor</span> <span class="op">=</span> <span class="ident">lss_driver::LedColor::Magenta</span>;
@@ -338,6 +387,10 @@
     <span class="ident">lss_driver::CommandModifier::CurrentLimp</span>(<span class="number">400</span>);
 
 <span class="kw">const</span> <span class="ident">SLIDING_SPEED</span>: <span class="ident">f32</span> <span class="op">=</span> <span class="number">340.0</span>;
+
+<span class="kw">const</span> <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">20</span>);
+<span class="kw">const</span> <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">3</span>);
+<span class="kw">const</span> <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">20</span>);
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Blinds</span>: <span class="ident">Send</span> {
@@ -412,7 +465,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>,
+            <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -427,7 +485,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>,
+            <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -442,7 +505,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>,
+            <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -455,7 +523,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>,
+            <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -468,7 +541,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>,
+            <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">slide_motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -590,7 +668,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
+            <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -603,7 +686,12 @@
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
+            <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -613,9 +701,25 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_until_motor_stopped</span>(<span class="ident">driver</span>: <span class="kw-2">&amp;mut</span> <span class="ident">lss_driver::LSSDriver</span>, <span class="ident">id</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_until_motor_stopped</span>(
+    <span class="ident">driver</span>: <span class="kw-2">&amp;mut</span> <span class="ident">lss_driver::LSSDriver</span>,
+    <span class="ident">id</span>: <span class="ident">u8</span>,
+    <span class="ident">timeout</span>: <span class="ident">Duration</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">start_time</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
     <span class="ident">sleep</span>(<span class="ident">Duration::from_secs</span>(<span class="number">1</span>)).<span class="kw">await</span>;
     <span class="kw">loop</span> {
+        <span class="kw">if</span> <span class="ident">start_time</span>.<span class="ident">elapsed</span>() <span class="op">&gt;</span> <span class="ident">timeout</span> {
+            <span class="kw">if</span> <span class="ident">driver</span>.<span class="ident">limp</span>(<span class="ident">id</span>).<span class="kw">await</span>.<span class="ident">is_err</span>() {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to stop motor after timeout&quot;</span>);
+            }
+            <span class="macro">error!</span>(
+                <span class="string">&quot;Timed out waiting for stop {}ms motor {}&quot;</span>,
+                <span class="ident">timeout</span>.<span class="ident">as_millis</span>(),
+                <span class="ident">id</span>
+            );
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error::DriverError::WaitingForStopTimedOut</span>.<span class="ident">into</span>());
+        }
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">driver</span>.<span class="ident">query_status</span>(<span class="ident">id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">match</span> <span class="ident">status</span> {
             <span class="ident">lss_driver::MotorStatus::Limp</span> <span class="op">|</span> <span class="ident">lss_driver::MotorStatus::Holding</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
@@ -630,12 +734,6 @@
         }
         <span class="ident">sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">50</span>)).<span class="kw">await</span>;
     }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">empty_test</span>() {}
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="blinds" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
