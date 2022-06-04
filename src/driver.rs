@@ -5,7 +5,7 @@ use crate::{
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
-use std::path::{Path};
+use std::path::Path;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -261,15 +261,33 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
-        todo!("Implement bedroom blinds");
+        self.driver
+            .set_rotation_speed_with_modifier(
+                self.config.motor_id,
+                SLIDING_SPEED,
+                SLIDING_CURRENT_LIMIT,
+            )
+            .await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.motor_id).await?;
+        self.driver.limp(self.config.motor_id).await?;
+        Ok(())
     }
 
     async fn close(&mut self) -> Result<()> {
-        todo!("Implement bedroom blinds");
+        self.driver
+            .set_rotation_speed_with_modifier(
+                self.config.motor_id,
+                -SLIDING_SPEED,
+                SLIDING_CURRENT_LIMIT,
+            )
+            .await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.motor_id).await?;
+        self.driver.limp(self.config.motor_id).await?;
+        Ok(())
     }
 
     async fn calibrate(&mut self, _path: &Path) -> Result<()> {
-        todo!("Implement bedroom blinds");
+        Ok(())
     }
 }
 
