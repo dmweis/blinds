@@ -309,9 +309,3 @@ pub async fn wait_until_motor_stopped(driver: &mut lss_driver::LSSDriver, id: u8
         sleep(Duration::from_millis(50)).await;
     }
 }
-
-#[cfg(test)]
-mod test {
-    #[test]
-    fn empty_test() {}
-}
