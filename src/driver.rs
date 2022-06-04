@@ -5,7 +5,7 @@ use crate::{
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::time::Duration;
 use tokio::time::sleep;
 
