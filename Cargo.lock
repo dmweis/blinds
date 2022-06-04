@@ -325,6 +325,7 @@ dependencies = [
  "actix-files",
  "actix-web",
  "anyhow",
+ "async-trait",
  "clap",
  "directories",
  "log",
