@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BlindsDriverConfig",""]]});
+initSidebarItems({"struct":[["BedroomBlindsConfig",""],["BlindsConfig",""],["LivingRoomBlindsConfig",""]]});

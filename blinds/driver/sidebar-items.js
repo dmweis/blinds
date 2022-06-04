@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["CALIBRATED_COLOR",""],["SLIDING_CURRENT_LIMIT",""],["SLIDING_SPEED",""],["UNCALIBRATED_COLOR",""]],"struct":[["BlindsDriver",""]]});
+initSidebarItems({"constant":[["CALIBRATED_COLOR",""],["SLIDING_CURRENT_LIMIT",""],["SLIDING_SPEED",""],["UNCALIBRATED_COLOR",""]],"fn":[["wait_until_motor_stopped",""]],"struct":[["BedroomBlinds",""],["LivingRoomBlinds",""]],"trait":[["Blinds",""]]});
