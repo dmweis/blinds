@@ -5,12 +5,11 @@ mod error;
 use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use clap::Parser;
-use config::BlindsDriverConfig;
-use driver::BlindsDriver;
+use config::BlindsConfig;
+use driver::{Blinds, LivingRoomBlinds};
 use log::*;
-use std::{path::PathBuf, time::Duration};
+use std::path::PathBuf;
 use tokio::sync::Mutex;
-use tokio::time::sleep;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -27,7 +26,7 @@ struct Args {
 }
 
 #[post("/open_blinds")]
-async fn open_blinds_handler(driver: web::Data<Mutex<BlindsDriver>>) -> impl Responder {
+async fn open_blinds_handler(driver: web::Data<Mutex<LivingRoomBlinds>>) -> impl Responder {
     let mut driver = driver.lock().await;
     if driver.open().await.is_ok() {
         HttpResponse::Ok().finish()
@@ -37,7 +36,7 @@ async fn open_blinds_handler(driver: web::Data<Mutex<BlindsDriver>>) -> impl Res
 }
 
 #[post("/close_blinds")]
-async fn close_blinds_handler(driver: web::Data<Mutex<BlindsDriver>>) -> impl Responder {
+async fn close_blinds_handler(driver: web::Data<Mutex<LivingRoomBlinds>>) -> impl Responder {
     let mut driver = driver.lock().await;
     if driver.close().await.is_ok() {
         HttpResponse::Ok().finish()
@@ -58,28 +57,22 @@ async fn main() -> Result<()> {
 
     let config_path = args
         .config
-        .unwrap_or_else(|| BlindsDriverConfig::default_config_location().unwrap());
+        .unwrap_or_else(|| BlindsConfig::default_config_location().unwrap());
 
     if args.create_default_config {
-        BlindsDriverConfig::default().save(&config_path).await?;
+        BlindsConfig::default().save(&config_path).await?;
     }
 
-    let config = BlindsDriverConfig::load(&config_path).await?;
+    let config = BlindsConfig::load(&config_path).await?;
 
-    let mut driver = BlindsDriver::new(config).await?;
+    let mut driver = config.driver_from_config().await?;
 
     let were_motors_rebooted = driver.were_motors_rebooted().await?;
     if args.run_calibration || were_motors_rebooted {
         if were_motors_rebooted {
             warn!("Motors seems to have been rebooted since the last run.");
         }
-        info!("Starting calibration");
-        driver.calibrate_flipper().await?;
-        driver.flip_open().await?;
-        sleep(Duration::from_secs(2)).await;
-        driver.flip_close_left().await?;
-        driver.config.save(&config_path).await?;
-        driver.configure().await?;
+        driver.calibrate(&config_path).await?;
     }
 
     let address = format!("{}:{}", "0.0.0.0", 8080);

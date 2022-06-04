@@ -1,22 +1,42 @@
-use crate::{config::BlindsDriverConfig, error};
+use crate::{
+    config::{BedroomBlindsConfig, LivingRoomBlindsConfig},
+    error,
+};
 use anyhow::Result;
+use async_trait::async_trait;
 use log::*;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::time::sleep;
 
-pub struct BlindsDriver {
-    pub config: BlindsDriverConfig,
+const UNCALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Magenta;
+const CALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Off;
+
+const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
+    lss_driver::CommandModifier::CurrentLimp(400);
+
+const SLIDING_SPEED: f32 = 340.0;
+
+#[async_trait]
+pub trait Blinds: Send {
+    async fn open(&mut self) -> Result<()>;
+    async fn close(&mut self) -> Result<()>;
+    async fn were_motors_rebooted(&mut self) -> Result<bool>;
+    async fn calibrate(&mut self, config_path: &Path) -> Result<()>;
+}
+
+pub struct LivingRoomBlinds {
+    pub config: LivingRoomBlindsConfig,
     driver: lss_driver::LSSDriver,
 }
 
-const UNCALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Magenta;
-const CALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Off;
-const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
-    lss_driver::CommandModifier::CurrentLimp(400);
-const SLIDING_SPEED: f32 = 340.0;
+pub struct BedroomBlinds {
+    pub config: BedroomBlindsConfig,
+    driver: lss_driver::LSSDriver,
+}
 
-impl BlindsDriver {
-    pub async fn new(config: BlindsDriverConfig) -> Result<Self> {
+impl BedroomBlinds {
+    pub async fn new(config: BedroomBlindsConfig) -> Result<Self> {
         let serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
         Ok(Self {
             config,
@@ -24,7 +44,33 @@ impl BlindsDriver {
         })
     }
 
-    pub async fn configure(&mut self) -> Result<()> {
+    async fn configure(&mut self) -> Result<()> {
+        self.driver
+            .configure_color(self.config.motor_id, UNCALIBRATED_COLOR)
+            .await?;
+        self.driver
+            .set_color(self.config.motor_id, CALIBRATED_COLOR)
+            .await?;
+        Ok(())
+    }
+}
+
+impl LivingRoomBlinds {
+    pub async fn new(config: LivingRoomBlindsConfig) -> Result<Self> {
+        let serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
+        Ok(Self {
+            config,
+            driver: serial_driver,
+        })
+    }
+
+    pub async fn reset_motors(&mut self) -> Result<()> {
+        self.driver.reset(lss_driver::BROADCAST_ID).await?;
+        sleep(Duration::from_secs(2)).await;
+        Ok(())
+    }
+
+    async fn configure(&mut self) -> Result<()> {
         self.driver
             .configure_color(lss_driver::BROADCAST_ID, UNCALIBRATED_COLOR)
             .await?;
@@ -34,43 +80,17 @@ impl BlindsDriver {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    pub async fn reset_motors(&mut self) -> Result<()> {
-        self.driver.reset(lss_driver::BROADCAST_ID).await?;
-        sleep(Duration::from_secs(2)).await;
-        Ok(())
-    }
-
-    pub async fn were_motors_rebooted(&mut self) -> Result<bool> {
-        let flip_motor_rebooted =
-            self.driver.query_color(self.config.flip_motor_id).await? != CALIBRATED_COLOR;
-        let slide_motor_rebooted =
-            self.driver.query_color(self.config.slide_motor_id).await? != CALIBRATED_COLOR;
-        Ok(flip_motor_rebooted || slide_motor_rebooted)
-    }
-
-    pub async fn open(&mut self) -> Result<()> {
-        self.flip_open().await?;
-        self.slide_open().await?;
-        Ok(())
-    }
-
-    pub async fn close(&mut self) -> Result<()> {
-        self.flip_open().await?;
-        self.slide_closed().await?;
-        self.flip_close_left().await?;
-        Ok(())
-    }
-
     pub async fn flip_open(&mut self) -> Result<()> {
         self.driver
             .move_to_position_with_modifier(
                 self.config.flip_motor_id,
-                self.config.flip_motor_center(),
+                self.config
+                    .flip_motor_center()
+                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        self.wait_until_stopped(self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
@@ -79,25 +99,28 @@ impl BlindsDriver {
         self.driver
             .move_to_position_with_modifier(
                 self.config.flip_motor_id,
-                self.config.flip_motor_left,
+                self.config
+                    .flip_motor_left
+                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        self.wait_until_stopped(self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub async fn flip_close_right(&mut self) -> Result<()> {
         self.driver
             .move_to_position_with_modifier(
                 self.config.flip_motor_id,
-                self.config.flip_motor_right,
+                self.config
+                    .flip_motor_right
+                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        self.wait_until_stopped(self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
@@ -110,7 +133,7 @@ impl BlindsDriver {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        self.wait_until_stopped(self.config.slide_motor_id).await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.slide_motor_id).await?;
         self.driver.limp(self.config.slide_motor_id).await?;
         Ok(())
     }
@@ -123,28 +146,9 @@ impl BlindsDriver {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        self.wait_until_stopped(self.config.slide_motor_id).await?;
+        wait_until_motor_stopped(&mut self.driver, self.config.slide_motor_id).await?;
         self.driver.limp(self.config.slide_motor_id).await?;
         Ok(())
-    }
-
-    pub async fn wait_until_stopped(&mut self, id: u8) -> Result<()> {
-        sleep(Duration::from_secs(1)).await;
-        loop {
-            let status = self.driver.query_status(id).await?;
-            match status {
-                lss_driver::MotorStatus::Limp | lss_driver::MotorStatus::Holding => return Ok(()),
-                lss_driver::MotorStatus::Unknown
-                | lss_driver::MotorStatus::OutsideLimits
-                | lss_driver::MotorStatus::Stuck
-                | lss_driver::MotorStatus::Blocked
-                | lss_driver::MotorStatus::SafeMode => {
-                    return Err(error::DriverError::BadMotorStatus(status).into())
-                }
-                _ => (),
-            }
-            sleep(Duration::from_millis(50)).await;
-        }
     }
 
     pub async fn calibrate_flipper(&mut self) -> Result<()> {
@@ -204,12 +208,87 @@ impl BlindsDriver {
             .await?;
         info!("Finished calibration");
         info!("left: {}, right: {}", left, right);
-        self.config.flip_motor_left = left;
-        self.config.flip_motor_right = right;
+        self.config.flip_motor_left = Some(left);
+        self.config.flip_motor_right = Some(right);
         self.driver
             .set_color(self.config.flip_motor_id, start_color)
             .await?;
         Ok(())
+    }
+}
+
+#[async_trait]
+impl Blinds for LivingRoomBlinds {
+    async fn were_motors_rebooted(&mut self) -> Result<bool> {
+        let flip_motor_rebooted =
+            self.driver.query_color(self.config.flip_motor_id).await? != CALIBRATED_COLOR;
+        let slide_motor_rebooted =
+            self.driver.query_color(self.config.slide_motor_id).await? != CALIBRATED_COLOR;
+        Ok(flip_motor_rebooted || slide_motor_rebooted)
+    }
+
+    async fn open(&mut self) -> Result<()> {
+        self.flip_open().await?;
+        self.slide_open().await?;
+        Ok(())
+    }
+
+    async fn close(&mut self) -> Result<()> {
+        self.flip_open().await?;
+        self.slide_closed().await?;
+        self.flip_close_left().await?;
+        Ok(())
+    }
+
+    async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
+        info!("Starting calibration");
+        self.calibrate_flipper().await?;
+        self.flip_open().await?;
+        sleep(Duration::from_secs(2)).await;
+        self.flip_close_left().await?;
+        self.config.save(config_path).await?;
+        self.configure().await?;
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl Blinds for BedroomBlinds {
+    async fn were_motors_rebooted(&mut self) -> Result<bool> {
+        let motor_rebooted =
+            self.driver.query_color(self.config.motor_id).await? != CALIBRATED_COLOR;
+        Ok(motor_rebooted)
+    }
+
+    async fn open(&mut self) -> Result<()> {
+        todo!("Implement bedroom blinds");
+    }
+
+    async fn close(&mut self) -> Result<()> {
+        todo!("Implement bedroom blinds");
+    }
+
+    async fn calibrate(&mut self, _path: &Path) -> Result<()> {
+        todo!("Implement bedroom blinds");
+    }
+}
+
+pub async fn wait_until_motor_stopped(driver: &mut lss_driver::LSSDriver, id: u8) -> Result<()> {
+    sleep(Duration::from_secs(1)).await;
+    loop {
+        let status = driver.query_status(id).await?;
+        match status {
+            lss_driver::MotorStatus::Limp | lss_driver::MotorStatus::Holding => return Ok(()),
+            lss_driver::MotorStatus::Unknown
+            | lss_driver::MotorStatus::OutsideLimits
+            | lss_driver::MotorStatus::Stuck
+            | lss_driver::MotorStatus::Blocked
+            | lss_driver::MotorStatus::SafeMode => {
+                return Err(error::DriverError::BadMotorStatus(status).into())
+            }
+            _ => (),
+        }
+        sleep(Duration::from_millis(50)).await;
     }
 }
 
