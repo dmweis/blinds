@@ -302,6 +302,24 @@
 <span id="297">297</span>
 <span id="298">298</span>
 <span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">config</span>::{<span class="ident">BedroomBlindsConfig</span>, <span class="ident">LivingRoomBlindsConfig</span>},
     <span class="ident">error</span>,
@@ -309,7 +327,7 @@
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>};
+<span class="kw">use</span> <span class="ident">std::path::Path</span>;
 <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">tokio::time::sleep</span>;
 
@@ -565,15 +583,33 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">open</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">todo!</span>(<span class="string">&quot;Implement bedroom blinds&quot;</span>);
+        <span class="self">self</span>.<span class="ident">driver</span>
+            .<span class="ident">set_rotation_speed_with_modifier</span>(
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
+                <span class="ident">SLIDING_SPEED</span>,
+                <span class="ident">SLIDING_CURRENT_LIMIT</span>,
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">todo!</span>(<span class="string">&quot;Implement bedroom blinds&quot;</span>);
+        <span class="self">self</span>.<span class="ident">driver</span>
+            .<span class="ident">set_rotation_speed_with_modifier</span>(
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
+                <span class="op">-</span><span class="ident">SLIDING_SPEED</span>,
+                <span class="ident">SLIDING_CURRENT_LIMIT</span>,
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">wait_until_motor_stopped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">driver</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">limp</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">calibrate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">todo!</span>(<span class="string">&quot;Implement bedroom blinds&quot;</span>);
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
