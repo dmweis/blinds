@@ -95,14 +95,12 @@ impl BlindsConfig {
         ProjectDirs::from("com", "dmw", "blinds_app").map(|dirs| dirs.config_dir().to_owned())
     }
 
-    pub async fn driver_from_config(&self) -> Result<Box<dyn Blinds>> {
-        match (&self.living_room_blinds, &self.bedroom_blinds) {
-            (Some(living_room_blinds), None) => Ok(Box::new(
-                LivingRoomBlinds::new(living_room_blinds.clone()).await?,
-            )),
-            (None, Some(bedroom_blinds)) => {
-                Ok(Box::new(BedroomBlinds::new(bedroom_blinds.clone()).await?))
+    pub async fn driver_from_config(self) -> Result<Box<dyn Blinds>> {
+        match (self.living_room_blinds, self.bedroom_blinds) {
+            (Some(living_room_blinds), None) => {
+                Ok(Box::new(LivingRoomBlinds::new(living_room_blinds).await?))
             }
+            (None, Some(bedroom_blinds)) => Ok(Box::new(BedroomBlinds::new(bedroom_blinds).await?)),
             (None, None) => Err(DriverError::MissingRoomConfiguration.into()),
             (_, _) => Err(DriverError::BothRoomConfigsPresent.into()),
         }
