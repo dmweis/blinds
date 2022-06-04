@@ -5,8 +5,8 @@ use crate::{
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
-use std::path::Path;
 use std::time::Duration;
+use std::{path::Path, time::Instant};
 use tokio::time::sleep;
 
 const UNCALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Magenta;
@@ -16,6 +16,10 @@ const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
     lss_driver::CommandModifier::CurrentLimp(400);
 
 const SLIDING_SPEED: f32 = 340.0;
+
+const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
+const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
+const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 
 #[async_trait]
 pub trait Blinds: Send {
@@ -90,7 +94,12 @@ impl LivingRoomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.flip_motor_id,
+            LIVING_ROOM_FLIPPER_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
@@ -105,7 +114,12 @@ impl LivingRoomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.flip_motor_id,
+            LIVING_ROOM_FLIPPER_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
@@ -120,7 +134,12 @@ impl LivingRoomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.flip_motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.flip_motor_id,
+            LIVING_ROOM_FLIPPER_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.flip_motor_id).await?;
         Ok(())
     }
@@ -133,7 +152,12 @@ impl LivingRoomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.slide_motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.slide_motor_id,
+            LIVING_ROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.slide_motor_id).await?;
         Ok(())
     }
@@ -146,7 +170,12 @@ impl LivingRoomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.slide_motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.slide_motor_id,
+            LIVING_ROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.slide_motor_id).await?;
         Ok(())
     }
@@ -268,7 +297,12 @@ impl Blinds for BedroomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.motor_id,
+            BEDROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.motor_id).await?;
         Ok(())
     }
@@ -281,7 +315,12 @@ impl Blinds for BedroomBlinds {
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
-        wait_until_motor_stopped(&mut self.driver, self.config.motor_id).await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.motor_id,
+            BEDROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
         self.driver.limp(self.config.motor_id).await?;
         Ok(())
     }
@@ -291,9 +330,25 @@ impl Blinds for BedroomBlinds {
     }
 }
 
-pub async fn wait_until_motor_stopped(driver: &mut lss_driver::LSSDriver, id: u8) -> Result<()> {
+pub async fn wait_until_motor_stopped(
+    driver: &mut lss_driver::LSSDriver,
+    id: u8,
+    timeout: Duration,
+) -> Result<()> {
+    let start_time = Instant::now();
     sleep(Duration::from_secs(1)).await;
     loop {
+        if start_time.elapsed() > timeout {
+            if driver.limp(id).await.is_err() {
+                error!("Failed to stop motor after timeout");
+            }
+            error!(
+                "Timed out waiting for stop {}ms motor {}",
+                timeout.as_millis(),
+                id
+            );
+            return Err(error::DriverError::WaitingForStopTimedOut.into());
+        }
         let status = driver.query_status(id).await?;
         match status {
             lss_driver::MotorStatus::Limp | lss_driver::MotorStatus::Holding => return Ok(()),

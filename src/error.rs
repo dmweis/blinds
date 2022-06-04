@@ -11,4 +11,6 @@ pub enum DriverError {
     MissingRoomConfiguration,
     #[error("found both room configurations")]
     BothRoomConfigsPresent,
+    #[error("waiting for stop timed out")]
+    WaitingForStopTimedOut,
 }
