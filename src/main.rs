@@ -26,7 +26,7 @@ struct Args {
 }
 
 #[post("/open_blinds")]
-async fn open_blinds_handler(driver: web::Data<Mutex<LivingRoomBlinds>>) -> impl Responder {
+async fn open_blinds_handler(driver: web::Data<Mutex<Box<dyn Blinds>>>) -> impl Responder {
     let mut driver = driver.lock().await;
     if let Err(e) = driver.open().await {
         error!("Error while opening blinds {e}");
@@ -37,7 +37,7 @@ async fn open_blinds_handler(driver: web::Data<Mutex<LivingRoomBlinds>>) -> impl
 }
 
 #[post("/close_blinds")]
-async fn close_blinds_handler(driver: web::Data<Mutex<LivingRoomBlinds>>) -> impl Responder {
+async fn close_blinds_handler(driver: web::Data<Mutex<Box<dyn Blinds>>>) -> impl Responder {
     let mut driver = driver.lock().await;
     if let Err(e) = driver.close().await {
         error!("Error while closing blinds {e}");
