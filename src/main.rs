@@ -2,7 +2,7 @@ mod config;
 mod driver;
 mod error;
 
-use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use clap::Parser;
 use config::BlindsConfig;
@@ -84,6 +84,7 @@ async fn main() -> Result<()> {
     HttpServer::new(move || {
         let driver = driver.clone();
         App::new()
+            .wrap(Logger::new("%r %s %U"))
             .service(open_blinds_handler)
             .service(close_blinds_handler)
             .app_data(driver)
