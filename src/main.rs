@@ -63,8 +63,13 @@ async fn main() -> Result<()> {
         .config
         .unwrap_or_else(|| BlindsConfig::default_config_location().unwrap());
 
+    let mut new_config = false;
     if args.create_default_config {
         BlindsConfig::default().save(&config_path).await?;
+        new_config = true;
+    } else if !config_path.exists() {
+        BlindsConfig::default().save(&config_path).await?;
+        new_config = true;
     }
 
     let config = BlindsConfig::load(&config_path).await?;
@@ -72,9 +77,12 @@ async fn main() -> Result<()> {
     let mut driver = config.driver_from_config().await?;
 
     let were_motors_rebooted = driver.were_motors_rebooted().await?;
-    if args.run_calibration || were_motors_rebooted {
+    if new_config || args.run_calibration || were_motors_rebooted {
         if were_motors_rebooted {
             warn!("Motors seems to have been rebooted since the last run.");
+        }
+        if new_config {
+            warn!("Fresh config written. Running calibration.");
         }
         driver.calibrate(&config_path).await?;
     }

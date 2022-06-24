@@ -90,6 +90,13 @@ impl LivingRoomBlindsConfig {
 }
 
 impl BlindsConfig {
+    pub async fn load_or_create_default(path: &Path) -> Result<Self> {
+        let mut file = File::open(path).await?;
+        let mut contents = vec![];
+        file.read_to_end(&mut contents).await?;
+        Ok(serde_yaml::from_slice(&contents)?)
+    }
+
     pub async fn load(path: &Path) -> Result<Self> {
         let mut file = File::open(path).await?;
         let mut contents = vec![];
