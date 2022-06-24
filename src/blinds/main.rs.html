@@ -103,11 +103,13 @@
 <span id="98">98</span>
 <span id="99">99</span>
 <span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">config</span>;
 <span class="kw">mod</span> <span class="ident">driver</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
 
-<span class="kw">use</span> <span class="ident">actix_web</span>::{<span class="ident">post</span>, <span class="ident">web</span>, <span class="ident">App</span>, <span class="ident">HttpResponse</span>, <span class="ident">HttpServer</span>, <span class="ident">Responder</span>};
+<span class="kw">use</span> <span class="ident">actix_web</span>::{<span class="ident">middleware::Logger</span>, <span class="ident">post</span>, <span class="ident">web</span>, <span class="ident">App</span>, <span class="ident">HttpResponse</span>, <span class="ident">HttpServer</span>, <span class="ident">Responder</span>};
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">config::BlindsConfig</span>;
@@ -183,11 +185,13 @@
     }
 
     <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="string">&quot;0.0.0.0&quot;</span>, <span class="number">8080</span>);
+    <span class="macro">info!</span>(<span class="string">&quot;Binding on address: {address}&quot;</span>);
     <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">web::Data::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">driver</span>));
 
     <span class="ident">HttpServer::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
         <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">driver</span>.<span class="ident">clone</span>();
         <span class="ident">App::new</span>()
+            .<span class="ident">wrap</span>(<span class="ident">Logger::new</span>(<span class="string">&quot;%r %s %U&quot;</span>))
             .<span class="ident">service</span>(<span class="ident">open_blinds_handler</span>)
             .<span class="ident">service</span>(<span class="ident">close_blinds_handler</span>)
             .<span class="ident">app_data</span>(<span class="ident">driver</span>)
