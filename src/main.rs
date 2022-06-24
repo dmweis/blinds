@@ -1,6 +1,7 @@
 mod config;
 mod driver;
 mod error;
+mod mqtt;
 
 use actix_web::{middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
@@ -8,8 +9,10 @@ use clap::Parser;
 use config::BlindsConfig;
 use driver::Blinds;
 use log::*;
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
+
+use crate::mqtt::start_mqtt_service;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -74,7 +77,7 @@ async fn main() -> Result<()> {
 
     let config = BlindsConfig::load(&config_path).await?;
 
-    let mut driver = config.driver_from_config().await?;
+    let (mut driver, mqtt_config) = config.driver_from_config().await?;
 
     let were_motors_rebooted = driver.were_motors_rebooted().await?;
     if new_config || args.run_calibration || were_motors_rebooted {
@@ -89,15 +92,18 @@ async fn main() -> Result<()> {
 
     let address = format!("{}:{}", "0.0.0.0", 8080);
     info!("Binding on address: {address}");
-    let driver = web::Data::new(Mutex::new(driver));
+    let driver = Arc::new(Mutex::new(driver));
+
+    start_mqtt_service(driver.clone(), mqtt_config).expect("Failed to start mqtt server");
+
+    let driver = web::Data::from(driver);
 
     HttpServer::new(move || {
-        let driver = driver.clone();
         App::new()
             .wrap(Logger::new("%r %s %U"))
             .service(open_blinds_handler)
             .service(close_blinds_handler)
-            .app_data(driver)
+            .app_data(driver.clone())
     })
     .bind(address)?
     .run()
