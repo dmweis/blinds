@@ -9,10 +9,22 @@ use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Default)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct BlindsConfig {
     living_room_blinds: Option<LivingRoomBlindsConfig>,
     bedroom_blinds: Option<BedroomBlindsConfig>,
+}
+
+impl Default for BlindsConfig {
+    fn default() -> Self {
+        let living_room_blinds_config = LivingRoomBlindsConfig {
+            ..Default::default()
+        };
+        Self {
+            living_room_blinds: Some(living_room_blinds_config),
+            bedroom_blinds: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
