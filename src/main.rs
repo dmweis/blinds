@@ -55,6 +55,8 @@ async fn main() -> Result<()> {
         simplelog::ColorChoice::Auto,
     )?;
 
+    info!("Starting blinds");
+
     let config_path = args
         .config
         .unwrap_or_else(|| BlindsConfig::default_config_location().unwrap());

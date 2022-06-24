@@ -4,6 +4,7 @@ use crate::{
 };
 use anyhow::Result;
 use directories::ProjectDirs;
+use log::*;
 use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -98,9 +99,13 @@ impl BlindsConfig {
     pub async fn driver_from_config(self) -> Result<Box<dyn Blinds>> {
         match (self.living_room_blinds, self.bedroom_blinds) {
             (Some(living_room_blinds), None) => {
+                info!("Loading living room blinds mode");
                 Ok(Box::new(LivingRoomBlinds::new(living_room_blinds).await?))
             }
-            (None, Some(bedroom_blinds)) => Ok(Box::new(BedroomBlinds::new(bedroom_blinds).await?)),
+            (None, Some(bedroom_blinds)) => {
+                info!("Loading bedroom blinds mode");
+                Ok(Box::new(BedroomBlinds::new(bedroom_blinds).await?))
+            }
             (None, None) => Err(DriverError::MissingRoomConfiguration.into()),
             (_, _) => Err(DriverError::BothRoomConfigsPresent.into()),
         }
