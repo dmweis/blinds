@@ -6,7 +6,7 @@ use actix_web::{middleware::Logger, post, web, App, HttpResponse, HttpServer, Re
 use anyhow::Result;
 use clap::Parser;
 use config::BlindsConfig;
-use driver::{Blinds, LivingRoomBlinds};
+use driver::Blinds;
 use log::*;
 use std::path::PathBuf;
 use tokio::sync::Mutex;

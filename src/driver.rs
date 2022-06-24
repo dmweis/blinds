@@ -48,6 +48,8 @@ impl BedroomBlinds {
         })
     }
 
+    #[allow(dead_code)]
+    // TODO(David): implement
     async fn configure(&mut self) -> Result<()> {
         self.driver
             .configure_color(self.config.motor_id, UNCALIBRATED_COLOR)
@@ -68,6 +70,8 @@ impl LivingRoomBlinds {
         })
     }
 
+    #[allow(dead_code)]
+    // TODO(David): I think this is not needed yet
     pub async fn reset_motors(&mut self) -> Result<()> {
         self.driver.reset(lss_driver::BROADCAST_ID).await?;
         sleep(Duration::from_secs(2)).await;
@@ -124,6 +128,8 @@ impl LivingRoomBlinds {
         Ok(())
     }
 
+    #[allow(dead_code)]
+    // TODO(David): I don't think I want to do this almost ever
     pub async fn flip_close_right(&mut self) -> Result<()> {
         self.driver
             .move_to_position_with_modifier(
