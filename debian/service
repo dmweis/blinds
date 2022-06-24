@@ -4,10 +4,13 @@ After=network-online.target nss-lookup.target
 Wants=network-online.target
 
 [Service]
+User=blinds
+DynamicUser=yes
+StateDirectory=blinds
 Type=simple
 Restart=on-failure
 RestartSec=5s
-ExecStart=/usr/bin/blinds
+ExecStart=/usr/bin/blinds --config /var/lib/blinds/blinds.yaml
 
 [Install]
 WantedBy=multi-user.target
