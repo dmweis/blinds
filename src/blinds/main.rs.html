@@ -107,6 +107,14 @@
 <span id="102">102</span>
 <span id="103">103</span>
 <span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">config</span>;
 <span class="kw">mod</span> <span class="ident">driver</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
@@ -172,8 +180,13 @@
         .<span class="ident">config</span>
         .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">BlindsConfig::default_config_location</span>().<span class="ident">unwrap</span>());
 
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_config</span> <span class="op">=</span> <span class="bool-val">false</span>;
     <span class="kw">if</span> <span class="ident">args</span>.<span class="ident">create_default_config</span> {
         <span class="ident">BlindsConfig::default</span>().<span class="ident">save</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">new_config</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">config_path</span>.<span class="ident">exists</span>() {
+        <span class="ident">BlindsConfig::default</span>().<span class="ident">save</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="ident">new_config</span> <span class="op">=</span> <span class="bool-val">true</span>;
     }
 
     <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">BlindsConfig::load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -181,9 +194,12 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">driver_from_config</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">were_motors_rebooted</span> <span class="op">=</span> <span class="ident">driver</span>.<span class="ident">were_motors_rebooted</span>().<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">args</span>.<span class="ident">run_calibration</span> <span class="op">|</span><span class="op">|</span> <span class="ident">were_motors_rebooted</span> {
+    <span class="kw">if</span> <span class="ident">new_config</span> <span class="op">|</span><span class="op">|</span> <span class="ident">args</span>.<span class="ident">run_calibration</span> <span class="op">|</span><span class="op">|</span> <span class="ident">were_motors_rebooted</span> {
         <span class="kw">if</span> <span class="ident">were_motors_rebooted</span> {
             <span class="macro">warn!</span>(<span class="string">&quot;Motors seems to have been rebooted since the last run.&quot;</span>);
+        }
+        <span class="kw">if</span> <span class="ident">new_config</span> {
+            <span class="macro">warn!</span>(<span class="string">&quot;Fresh config written. Running calibration.&quot;</span>);
         }
         <span class="ident">driver</span>.<span class="ident">calibrate</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
     }
