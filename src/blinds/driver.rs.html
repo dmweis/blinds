@@ -369,6 +369,12 @@
 <span id="364">364</span>
 <span id="365">365</span>
 <span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">config</span>::{<span class="ident">BedroomBlindsConfig</span>, <span class="ident">LivingRoomBlindsConfig</span>},
     <span class="ident">error</span>,
@@ -419,6 +425,8 @@
         })
     }
 
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="comment">// TODO(David): implement</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">driver</span>
             .<span class="ident">configure_color</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>, <span class="ident">UNCALIBRATED_COLOR</span>)
@@ -439,6 +447,8 @@
         })
     }
 
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="comment">// TODO(David): I think this is not needed yet</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">reset_motors</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">driver</span>.<span class="ident">reset</span>(<span class="ident">lss_driver::BROADCAST_ID</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="ident">sleep</span>(<span class="ident">Duration::from_secs</span>(<span class="number">2</span>)).<span class="kw">await</span>;
@@ -495,6 +505,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="comment">// TODO(David): I don&#39;t think I want to do this almost ever</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">flip_close_right</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">driver</span>
             .<span class="ident">move_to_position_with_modifier</span>(
