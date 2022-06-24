@@ -78,6 +78,7 @@ async fn main() -> Result<()> {
     }
 
     let address = format!("{}:{}", "0.0.0.0", 8080);
+    info!("Binding on address: {address}");
     let driver = web::Data::new(Mutex::new(driver));
 
     HttpServer::new(move || {
