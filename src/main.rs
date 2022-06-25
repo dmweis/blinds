@@ -80,7 +80,8 @@ async fn main() -> Result<()> {
     let (mut driver, mqtt_config) = config.driver_from_config().await?;
 
     let were_motors_rebooted = driver.were_motors_rebooted().await?;
-    if new_config || args.run_calibration || were_motors_rebooted {
+    let needs_calibration = driver.needs_calibration();
+    if new_config || args.run_calibration || were_motors_rebooted || needs_calibration {
         if were_motors_rebooted {
             warn!("Motors seems to have been rebooted since the last run.");
         }

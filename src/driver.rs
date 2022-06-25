@@ -32,6 +32,7 @@ pub trait Blinds: Send {
     async fn close(&mut self) -> Result<()>;
     async fn were_motors_rebooted(&mut self) -> Result<bool>;
     async fn calibrate(&mut self, config_path: &Path) -> Result<()>;
+    fn needs_calibration(&self) -> bool;
 }
 
 pub struct LivingRoomBlinds {
@@ -290,6 +291,10 @@ impl Blinds for LivingRoomBlinds {
         self.configure().await?;
         Ok(())
     }
+
+    fn needs_calibration(&self) -> bool {
+        self.config.flip_motor_left.is_none() || self.config.flip_motor_right.is_none()
+    }
 }
 
 #[async_trait]
@@ -348,6 +353,10 @@ impl Blinds for BedroomBlinds {
         self.config.save(config_path).await?;
         self.configure().await?;
         Ok(())
+    }
+
+    fn needs_calibration(&self) -> bool {
+        self.config.top_position.is_none()
     }
 }
 
