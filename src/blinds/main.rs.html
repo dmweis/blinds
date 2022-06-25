@@ -115,9 +115,16 @@
 <span id="110">110</span>
 <span id="111">111</span>
 <span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">config</span>;
 <span class="kw">mod</span> <span class="ident">driver</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
+<span class="kw">mod</span> <span class="ident">mqtt</span>;
 
 <span class="kw">use</span> <span class="ident">actix_web</span>::{<span class="ident">middleware::Logger</span>, <span class="ident">post</span>, <span class="ident">web</span>, <span class="ident">App</span>, <span class="ident">HttpResponse</span>, <span class="ident">HttpServer</span>, <span class="ident">Responder</span>};
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
@@ -125,8 +132,10 @@
 <span class="kw">use</span> <span class="ident">config::BlindsConfig</span>;
 <span class="kw">use</span> <span class="ident">driver::Blinds</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path::PathBuf</span>, <span class="ident">sync::Arc</span>};
 <span class="kw">use</span> <span class="ident">tokio::sync::Mutex</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mqtt::start_mqtt_service</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Parser</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">author</span>, <span class="ident">version</span>, <span class="ident">about</span>, <span class="ident">long_about</span> <span class="op">=</span> <span class="prelude-val">None</span>)]</span>
@@ -191,7 +200,7 @@
 
     <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">BlindsConfig::load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">driver_from_config</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">driver</span>, <span class="ident">mqtt_config</span>) <span class="op">=</span> <span class="ident">config</span>.<span class="ident">driver_from_config</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">were_motors_rebooted</span> <span class="op">=</span> <span class="ident">driver</span>.<span class="ident">were_motors_rebooted</span>().<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">if</span> <span class="ident">new_config</span> <span class="op">|</span><span class="op">|</span> <span class="ident">args</span>.<span class="ident">run_calibration</span> <span class="op">|</span><span class="op">|</span> <span class="ident">were_motors_rebooted</span> {
@@ -206,15 +215,18 @@
 
     <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="string">&quot;0.0.0.0&quot;</span>, <span class="number">8080</span>);
     <span class="macro">info!</span>(<span class="string">&quot;Binding on address: {address}&quot;</span>);
-    <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">web::Data::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">driver</span>));
+    <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">driver</span>));
+
+    <span class="ident">start_mqtt_service</span>(<span class="ident">driver</span>.<span class="ident">clone</span>(), <span class="ident">mqtt_config</span>).<span class="ident">expect</span>(<span class="string">&quot;Failed to start mqtt server&quot;</span>);
+
+    <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">web::Data::from</span>(<span class="ident">driver</span>);
 
     <span class="ident">HttpServer::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">driver</span>.<span class="ident">clone</span>();
         <span class="ident">App::new</span>()
             .<span class="ident">wrap</span>(<span class="ident">Logger::new</span>(<span class="string">&quot;%r %s %U&quot;</span>))
             .<span class="ident">service</span>(<span class="ident">open_blinds_handler</span>)
             .<span class="ident">service</span>(<span class="ident">close_blinds_handler</span>)
-            .<span class="ident">app_data</span>(<span class="ident">driver</span>)
+            .<span class="ident">app_data</span>(<span class="ident">driver</span>.<span class="ident">clone</span>())
     })
     .<span class="ident">bind</span>(<span class="ident">address</span>)<span class="question-mark">?</span>
     .<span class="ident">run</span>()

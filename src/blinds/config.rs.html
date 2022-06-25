@@ -136,6 +136,43 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">driver</span>::{<span class="ident">BedroomBlinds</span>, <span class="ident">Blinds</span>, <span class="ident">LivingRoomBlinds</span>},
     <span class="ident">error::DriverError</span>,
@@ -143,11 +180,12 @@
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">directories::ProjectDirs</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 <span class="kw">use</span> <span class="ident">tokio::fs::File</span>;
 <span class="kw">use</span> <span class="ident">tokio::io</span>::{<span class="ident">AsyncReadExt</span>, <span class="ident">AsyncWriteExt</span>};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlindsConfig</span> {
     <span class="ident">living_room_blinds</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">LivingRoomBlindsConfig</span><span class="op">&gt;</span>,
     <span class="ident">bedroom_blinds</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BedroomBlindsConfig</span><span class="op">&gt;</span>,
@@ -165,10 +203,11 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BedroomBlindsConfig</span> {
     <span class="kw">pub</span> <span class="ident">serial_port</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">motor_id</span>: <span class="ident">u8</span>,
+    <span class="kw">pub</span> <span class="ident">mqtt</span>: <span class="ident">MqttConfig</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BedroomBlindsConfig</span> {
@@ -176,6 +215,7 @@
         <span class="ident">BedroomBlindsConfig</span> {
             <span class="ident">serial_port</span>: <span class="ident">String::from</span>(<span class="string">&quot;/dev/ttyUSB0&quot;</span>),
             <span class="ident">motor_id</span>: <span class="number">1</span>,
+            <span class="ident">mqtt</span>: <span class="ident">MqttConfig::default</span>(),
         }
     }
 }
@@ -195,13 +235,14 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LivingRoomBlindsConfig</span> {
     <span class="kw">pub</span> <span class="ident">serial_port</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">slide_motor_id</span>: <span class="ident">u8</span>,
     <span class="kw">pub</span> <span class="ident">flip_motor_id</span>: <span class="ident">u8</span>,
     <span class="kw">pub</span> <span class="ident">flip_motor_left</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">flip_motor_right</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">mqtt</span>: <span class="ident">MqttConfig</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">LivingRoomBlindsConfig</span> {
@@ -212,6 +253,7 @@
             <span class="ident">flip_motor_id</span>: <span class="number">2</span>,
             <span class="ident">flip_motor_left</span>: <span class="prelude-val">None</span>,
             <span class="ident">flip_motor_right</span>: <span class="prelude-val">None</span>,
+            <span class="ident">mqtt</span>: <span class="ident">MqttConfig::default</span>(),
         }
     }
 }
@@ -248,15 +290,20 @@
         <span class="ident">ProjectDirs::from</span>(<span class="string">&quot;com&quot;</span>, <span class="string">&quot;dmw&quot;</span>, <span class="string">&quot;blinds_app&quot;</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">dirs</span><span class="op">|</span> <span class="ident">dirs</span>.<span class="ident">config_dir</span>().<span class="ident">to_owned</span>())
     }
 
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">driver_from_config</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Blinds</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">driver_from_config</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Blinds</span><span class="op">&gt;</span>, <span class="ident">MqttConfig</span>)<span class="op">&gt;</span> {
         <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">living_room_blinds</span>, <span class="self">self</span>.<span class="ident">bedroom_blinds</span>) {
             (<span class="prelude-val">Some</span>(<span class="ident">living_room_blinds</span>), <span class="prelude-val">None</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;Loading living room blinds mode&quot;</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">LivingRoomBlinds::new</span>(<span class="ident">living_room_blinds</span>).<span class="kw">await</span><span class="question-mark">?</span>))
+                <span class="kw">let</span> <span class="ident">mqtt</span> <span class="op">=</span> <span class="ident">living_room_blinds</span>.<span class="ident">mqtt</span>.<span class="ident">clone</span>();
+                <span class="prelude-val">Ok</span>((
+                    <span class="ident">Box::new</span>(<span class="ident">LivingRoomBlinds::new</span>(<span class="ident">living_room_blinds</span>).<span class="kw">await</span><span class="question-mark">?</span>),
+                    <span class="ident">mqtt</span>,
+                ))
             }
             (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">bedroom_blinds</span>)) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;Loading bedroom blinds mode&quot;</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">BedroomBlinds::new</span>(<span class="ident">bedroom_blinds</span>).<span class="kw">await</span><span class="question-mark">?</span>))
+                <span class="kw">let</span> <span class="ident">mqtt</span> <span class="op">=</span> <span class="ident">bedroom_blinds</span>.<span class="ident">mqtt</span>.<span class="ident">clone</span>();
+                <span class="prelude-val">Ok</span>((<span class="ident">Box::new</span>(<span class="ident">BedroomBlinds::new</span>(<span class="ident">bedroom_blinds</span>).<span class="kw">await</span><span class="question-mark">?</span>), <span class="ident">mqtt</span>))
             }
             (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">DriverError::MissingRoomConfiguration</span>.<span class="ident">into</span>()),
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">DriverError::BothRoomConfigsPresent</span>.<span class="ident">into</span>()),
@@ -267,6 +314,33 @@
 <span class="kw">impl</span> <span class="ident">LivingRoomBlindsConfig</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flip_motor_center</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">flip_motor_left</span><span class="question-mark">?</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">flip_motor_right</span><span class="question-mark">?</span>) <span class="op">/</span> <span class="number">2.0</span>)
+    }
+}
+
+<span class="comment">// weird serde default thing</span>
+<span class="kw">const</span> <span class="ident">DEFAULT_MQTT_PORT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">1883</span>;
+
+<span class="kw">const</span> <span class="kw">fn</span> <span class="ident">default_mqtt_port</span>() -&gt; <span class="ident">u16</span> {
+    <span class="ident">DEFAULT_MQTT_PORT</span>
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MqttConfig</span> {
+    <span class="kw">pub</span> <span class="ident">base_route</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">broker_host</span>: <span class="ident">String</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;default_mqtt_port&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">broker_port</span>: <span class="ident">u16</span>,
+    <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">String</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">MqttConfig</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
+        <span class="ident">MqttConfig</span> {
+            <span class="ident">base_route</span>: <span class="string">&quot;living_room/blinds&quot;</span>.<span class="ident">to_owned</span>(),
+            <span class="ident">broker_host</span>: <span class="string">&quot;mqtt&quot;</span>.<span class="ident">to_owned</span>(),
+            <span class="ident">broker_port</span>: <span class="ident">DEFAULT_MQTT_PORT</span>,
+            <span class="ident">client_id</span>: <span class="string">&quot;living_room_blinds&quot;</span>.<span class="ident">to_owned</span>(),
+        }
     }
 }
 </code></pre></div>
