@@ -16,7 +16,7 @@ const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
     lss_driver::CommandModifier::CurrentLimp(400);
 
 const BEDROOM_LIFTING_CURRENT_LIMIT: lss_driver::CommandModifier =
-    lss_driver::CommandModifier::CurrentLimp(1000);
+    lss_driver::CommandModifier::CurrentLimp(600);
 
 const SLIDING_SPEED: f32 = 340.0;
 
