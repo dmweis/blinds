@@ -32,6 +32,7 @@ impl Default for BlindsConfig {
 pub struct BedroomBlindsConfig {
     pub serial_port: String,
     pub motor_id: u8,
+    pub top_position: Option<f32>,
     pub mqtt: MqttConfig,
 }
 
@@ -40,6 +41,7 @@ impl Default for BedroomBlindsConfig {
         BedroomBlindsConfig {
             serial_port: String::from("/dev/ttyUSB0"),
             motor_id: 1,
+            top_position: None,
             mqtt: MqttConfig::default(),
         }
     }

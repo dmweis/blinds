@@ -22,7 +22,9 @@ const SLIDING_SPEED: f32 = 340.0;
 
 const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
-const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(3);
+const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(15);
+
+const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 1000.0;
 
 #[async_trait]
 pub trait Blinds: Send {
@@ -52,8 +54,6 @@ impl BedroomBlinds {
         })
     }
 
-    #[allow(dead_code)]
-    // TODO(David): implement
     async fn configure(&mut self) -> Result<()> {
         self.driver
             .configure_color(self.config.motor_id, UNCALIBRATED_COLOR)
@@ -281,7 +281,7 @@ impl Blinds for LivingRoomBlinds {
     }
 
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
-        info!("Starting calibration");
+        info!("Starting calibration for living room blinds");
         self.calibrate_flipper().await?;
         self.flip_open().await?;
         sleep(Duration::from_secs(2)).await;
@@ -319,10 +319,14 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn close(&mut self) -> Result<()> {
+        // make sure speed is limited
         self.driver
-            .set_rotation_speed_with_modifier(
+            .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
+            .await?;
+        self.driver
+            .move_to_position_with_modifier(
                 self.config.motor_id,
-                SLIDING_SPEED,
+                self.config.top_position.expect("Oh no!") + BEDROOM_BLIND_BOTTOM_OFFSET,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -336,7 +340,13 @@ impl Blinds for BedroomBlinds {
         Ok(())
     }
 
-    async fn calibrate(&mut self, _path: &Path) -> Result<()> {
+    async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
+        info!("Starting calibration for bedroom blinds");
+        self.open().await?;
+        let top_position = self.driver.query_position(self.config.motor_id).await?;
+        self.config.top_position = Some(top_position);
+        self.config.save(config_path).await?;
+        self.configure().await?;
         Ok(())
     }
 }
@@ -360,8 +370,6 @@ pub async fn wait_until_motor_stopped(
             );
             return Err(error::DriverError::WaitingForStopTimedOut.into());
         }
-        let current = driver.query_current(id).await?;
-        info!("Current use is {current}");
         let status = driver.query_status(id).await?;
         match status {
             lss_driver::MotorStatus::Limp | lss_driver::MotorStatus::Holding => return Ok(()),
