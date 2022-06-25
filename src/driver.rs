@@ -41,7 +41,8 @@ pub struct BedroomBlinds {
 
 impl BedroomBlinds {
     pub async fn new(config: BedroomBlindsConfig) -> Result<Self> {
-        let serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
+        let mut serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
+        serial_driver.limp(lss_driver::BROADCAST_ID).await?;
         Ok(Self {
             config,
             driver: serial_driver,
@@ -63,7 +64,8 @@ impl BedroomBlinds {
 
 impl LivingRoomBlinds {
     pub async fn new(config: LivingRoomBlindsConfig) -> Result<Self> {
-        let serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
+        let mut serial_driver = lss_driver::LSSDriver::new(&config.serial_port)?;
+        serial_driver.limp(lss_driver::BROADCAST_ID).await?;
         Ok(Self {
             config,
             driver: serial_driver,
