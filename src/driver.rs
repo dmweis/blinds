@@ -305,7 +305,7 @@ impl Blinds for BedroomBlinds {
             .set_rotation_speed_with_modifier(
                 self.config.motor_id,
                 -SLIDING_SPEED,
-                SLIDING_CURRENT_LIMIT,
+                BEDROOM_LIFTING_CURRENT_LIMIT,
             )
             .await?;
         wait_until_motor_stopped(
@@ -323,7 +323,7 @@ impl Blinds for BedroomBlinds {
             .set_rotation_speed_with_modifier(
                 self.config.motor_id,
                 SLIDING_SPEED,
-                BEDROOM_LIFTING_CURRENT_LIMIT,
+                SLIDING_CURRENT_LIMIT,
             )
             .await?;
         wait_until_motor_stopped(
