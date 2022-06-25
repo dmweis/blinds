@@ -24,7 +24,7 @@ const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
 const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(15);
 
-const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4000.0;
+const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4200.0;
 
 #[async_trait]
 pub trait Blinds: Send {
