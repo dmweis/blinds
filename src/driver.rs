@@ -24,6 +24,7 @@ const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(22);
 const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
 const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 
+const BEDROOM_DOOR_TOP_OFFSET: f32 = 100.0;
 const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4400.0;
 
 #[async_trait]
@@ -64,6 +65,24 @@ impl BedroomBlinds {
             .await?;
         Ok(())
     }
+
+    async fn open_until_limit(&mut self) -> Result<()> {
+        self.driver
+            .set_rotation_speed_with_modifier(
+                self.config.motor_id,
+                -SLIDING_SPEED,
+                BEDROOM_LIFTING_CURRENT_LIMIT,
+            )
+            .await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.motor_id,
+            BEDROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
+        self.driver.limp(self.config.motor_id).await?;
+        Ok(())
+    }
 }
 
 impl LivingRoomBlinds {
@@ -100,7 +119,7 @@ impl LivingRoomBlinds {
                 self.config.flip_motor_id,
                 self.config
                     .flip_motor_center()
-                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
+                    .ok_or(error::DriverError::MissingMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -120,7 +139,7 @@ impl LivingRoomBlinds {
                 self.config.flip_motor_id,
                 self.config
                     .flip_motor_left
-                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
+                    .ok_or(error::DriverError::MissingMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -142,7 +161,7 @@ impl LivingRoomBlinds {
                 self.config.flip_motor_id,
                 self.config
                     .flip_motor_right
-                    .ok_or(error::DriverError::MissingFlipMotorConfig)?,
+                    .ok_or(error::DriverError::MissingMotorConfig)?,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -306,10 +325,16 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
+        // make sure speed is limited
         self.driver
-            .set_rotation_speed_with_modifier(
+            .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
+            .await?;
+        self.driver
+            .move_to_position_with_modifier(
                 self.config.motor_id,
-                -SLIDING_SPEED,
+                self.config
+                    .top_position
+                    .ok_or(error::DriverError::MissingMotorConfig)?,
                 BEDROOM_LIFTING_CURRENT_LIMIT,
             )
             .await?;
@@ -331,7 +356,10 @@ impl Blinds for BedroomBlinds {
         self.driver
             .move_to_position_with_modifier(
                 self.config.motor_id,
-                self.config.top_position.expect("Oh no!") + BEDROOM_BLIND_BOTTOM_OFFSET,
+                self.config
+                    .top_position
+                    .ok_or(error::DriverError::MissingMotorConfig)?
+                    + BEDROOM_BLIND_BOTTOM_OFFSET,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -347,8 +375,10 @@ impl Blinds for BedroomBlinds {
 
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
         info!("Starting calibration for bedroom blinds");
-        self.open().await?;
-        let top_position = self.driver.query_position(self.config.motor_id).await?;
+        self.open_until_limit().await?;
+        // top of bedroom is a bit away from the place where we stop for current limit
+        let top_position =
+            self.driver.query_position(self.config.motor_id).await? + BEDROOM_DOOR_TOP_OFFSET;
         self.config.top_position = Some(top_position);
         self.config.save(config_path).await?;
         self.configure().await?;

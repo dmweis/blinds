@@ -5,8 +5,8 @@ use thiserror::Error;
 pub enum DriverError {
     #[error("bad motor status {0:?}")]
     BadMotorStatus(MotorStatus),
-    #[error("missing flip motor config")]
-    MissingFlipMotorConfig,
+    #[error("missing motor config")]
+    MissingMotorConfig,
     #[error("missing room configuration")]
     MissingRoomConfiguration,
     #[error("found both room configurations")]
