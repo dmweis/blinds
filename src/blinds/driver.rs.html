@@ -375,6 +375,8 @@
 <span id="370">370</span>
 <span id="371">371</span>
 <span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">config</span>::{<span class="ident">BedroomBlindsConfig</span>, <span class="ident">LivingRoomBlindsConfig</span>},
     <span class="ident">error</span>,
@@ -396,7 +398,7 @@
 
 <span class="kw">const</span> <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">20</span>);
 <span class="kw">const</span> <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">3</span>);
-<span class="kw">const</span> <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">20</span>);
+<span class="kw">const</span> <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">3</span>);
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Blinds</span>: <span class="ident">Send</span> {
@@ -418,7 +420,8 @@
 
 <span class="kw">impl</span> <span class="ident">BedroomBlinds</span> {
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="ident">BedroomBlindsConfig</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">serial_driver</span> <span class="op">=</span> <span class="ident">lss_driver::LSSDriver::new</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">serial_port</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial_driver</span> <span class="op">=</span> <span class="ident">lss_driver::LSSDriver::new</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">serial_port</span>)<span class="question-mark">?</span>;
+        <span class="ident">serial_driver</span>.<span class="ident">limp</span>(<span class="ident">lss_driver::BROADCAST_ID</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">config</span>,
             <span class="ident">driver</span>: <span class="ident">serial_driver</span>,
@@ -440,7 +443,8 @@
 
 <span class="kw">impl</span> <span class="ident">LivingRoomBlinds</span> {
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="ident">LivingRoomBlindsConfig</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">serial_driver</span> <span class="op">=</span> <span class="ident">lss_driver::LSSDriver::new</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">serial_port</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial_driver</span> <span class="op">=</span> <span class="ident">lss_driver::LSSDriver::new</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">serial_port</span>)<span class="question-mark">?</span>;
+        <span class="ident">serial_driver</span>.<span class="ident">limp</span>(<span class="ident">lss_driver::BROADCAST_ID</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">config</span>,
             <span class="ident">driver</span>: <span class="ident">serial_driver</span>,
