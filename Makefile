@@ -6,8 +6,12 @@ ARM_BUILD_PATH ?= target/debian/blinds_*.deb
 
 .PHONY: build
 build:
-	cargo build --release 
+	cargo build --release
 	cargo deb --no-build
+
+.PHONY: install
+install: build
+	sudo dpkg -i $(ARM_BUILD_PATH)
 
 .PHONY: deploy
 deploy: build
