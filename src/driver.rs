@@ -360,6 +360,8 @@ pub async fn wait_until_motor_stopped(
             );
             return Err(error::DriverError::WaitingForStopTimedOut.into());
         }
+        let current = driver.query_current(id).await?;
+        info!("Current use is {current}");
         let status = driver.query_status(id).await?;
         match status {
             lss_driver::MotorStatus::Limp | lss_driver::MotorStatus::Holding => return Ok(()),
