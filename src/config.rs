@@ -156,6 +156,7 @@ pub struct MqttConfig {
     #[serde(default = "default_mqtt_port")]
     pub broker_port: u16,
     pub client_id: String,
+    pub switch_topic: Option<String>,
 }
 
 impl Default for MqttConfig {
@@ -165,6 +166,7 @@ impl Default for MqttConfig {
             broker_host: "mqtt".to_owned(),
             broker_port: DEFAULT_MQTT_PORT,
             client_id: "living_room_blinds".to_owned(),
+            switch_topic: None,
         }
     }
 }

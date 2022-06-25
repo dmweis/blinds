@@ -61,9 +61,11 @@ pub fn start_mqtt_service(
             )
             .unwrap();
 
-        router
-            .add_handler("zigbee2mqtt/switch/one", SwitchHandler::new(blinds))
-            .unwrap();
+        if let Some(switch_topic) = config.switch_topic {
+            router
+                .add_handler(&switch_topic, SwitchHandler::new(blinds))
+                .unwrap();
+        }
 
         let topics = router
             .topics_for_subscription()
