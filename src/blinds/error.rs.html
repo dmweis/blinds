@@ -26,8 +26,8 @@
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DriverError</span> {
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;bad motor status {0:?}&quot;</span>)]</span>
     <span class="ident">BadMotorStatus</span>(<span class="ident">MotorStatus</span>),
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing flip motor config&quot;</span>)]</span>
-    <span class="ident">MissingFlipMotorConfig</span>,
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing motor config&quot;</span>)]</span>
+    <span class="ident">MissingMotorConfig</span>,
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing room configuration&quot;</span>)]</span>
     <span class="ident">MissingRoomConfiguration</span>,
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;found both room configurations&quot;</span>)]</span>
