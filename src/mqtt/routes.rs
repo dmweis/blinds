@@ -97,9 +97,9 @@ pub enum Action {
 pub struct SwitchPayload {
     pub action: Action,
     #[allow(dead_code)]
-    pub battery: i64,
+    pub battery: f32,
     #[allow(dead_code)]
-    pub linkquality: i64,
+    pub linkquality: f32,
     #[allow(dead_code)]
-    pub voltage: i64,
+    pub voltage: f32,
 }
