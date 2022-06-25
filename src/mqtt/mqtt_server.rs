@@ -1,4 +1,4 @@
-use super::routes::BlindsHandler;
+use super::routes::{BlindsHandler, SwitchHandler};
 use crate::{config::MqttConfig, driver::Blinds};
 use log::*;
 use mqtt_router::Router;
@@ -55,8 +55,16 @@ pub fn start_mqtt_service(
         let mut router = Router::default();
 
         router
-            .add_handler(&format!("{base_topic}/#"), BlindsHandler::new(blinds))
+            .add_handler(
+                &format!("{base_topic}/#"),
+                BlindsHandler::new(blinds.clone()),
+            )
             .unwrap();
+
+        router
+            .add_handler("zigbee2mqtt/switch/one", SwitchHandler::new(blinds))
+            .unwrap();
+
         let topics = router
             .topics_for_subscription()
             .map(|topic| SubscribeFilter {
