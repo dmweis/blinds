@@ -20,9 +20,9 @@ const BEDROOM_LIFTING_CURRENT_LIMIT: lss_driver::CommandModifier =
 
 const SLIDING_SPEED: f32 = 340.0;
 
-const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
+const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(22);
 const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
-const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(15);
+const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 
 const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4400.0;
 
