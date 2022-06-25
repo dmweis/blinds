@@ -99,7 +99,15 @@
 <span id="94">94</span>
 <span id="95">95</span>
 <span id="96">96</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::routes::BlindsHandler</span>;
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::routes</span>::{<span class="ident">BlindsHandler</span>, <span class="ident">SwitchHandler</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">config::MqttConfig</span>, <span class="ident">driver::Blinds</span>};
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">mqtt_router::Router</span>;
@@ -156,8 +164,16 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">Router::default</span>();
 
         <span class="ident">router</span>
-            .<span class="ident">add_handler</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{base_topic}/#&quot;</span>), <span class="ident">BlindsHandler::new</span>(<span class="ident">blinds</span>))
+            .<span class="ident">add_handler</span>(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{base_topic}/#&quot;</span>),
+                <span class="ident">BlindsHandler::new</span>(<span class="ident">blinds</span>.<span class="ident">clone</span>()),
+            )
             .<span class="ident">unwrap</span>();
+
+        <span class="ident">router</span>
+            .<span class="ident">add_handler</span>(<span class="string">&quot;zigbee2mqtt/switch/one&quot;</span>, <span class="ident">SwitchHandler::new</span>(<span class="ident">blinds</span>))
+            .<span class="ident">unwrap</span>();
+
         <span class="kw">let</span> <span class="ident">topics</span> <span class="op">=</span> <span class="ident">router</span>
             .<span class="ident">topics_for_subscription</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">topic</span><span class="op">|</span> <span class="ident">SubscribeFilter</span> {

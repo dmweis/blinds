@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["blinds"] = [{"text":"impl RouteHandler for <a class=\"struct\" href=\"blinds/mqtt/routes/struct.BlindsHandler.html\" title=\"struct blinds::mqtt::routes::BlindsHandler\">BlindsHandler</a>","synthetic":false,"types":["blinds::mqtt::routes::BlindsHandler"]}];
+implementors["blinds"] = [{"text":"impl RouteHandler for <a class=\"struct\" href=\"blinds/mqtt/routes/struct.BlindsHandler.html\" title=\"struct blinds::mqtt::routes::BlindsHandler\">BlindsHandler</a>","synthetic":false,"types":["blinds::mqtt::routes::BlindsHandler"]},{"text":"impl RouteHandler for <a class=\"struct\" href=\"blinds/mqtt/routes/struct.SwitchHandler.html\" title=\"struct blinds::mqtt::routes::SwitchHandler\">SwitchHandler</a>","synthetic":false,"types":["blinds::mqtt::routes::SwitchHandler"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

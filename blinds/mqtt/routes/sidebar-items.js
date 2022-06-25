@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BlindsHandler",""]]});
+initSidebarItems({"enum":[["Action",""]],"struct":[["BlindsHandler",""],["SwitchHandler",""],["SwitchPayload",""]]});
