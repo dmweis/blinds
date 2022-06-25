@@ -36,6 +36,8 @@ impl RouteHandler for BlindsHandler {
                 .close()
                 .await
                 .map_err(|e| RouterError::HandlerError(e.into()))?;
+        } else {
+            error!("Unmatched path handler {topic}");
         }
         Ok(())
     }
