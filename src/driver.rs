@@ -15,6 +15,9 @@ const CALIBRATED_COLOR: lss_driver::LedColor = lss_driver::LedColor::Off;
 const SLIDING_CURRENT_LIMIT: lss_driver::CommandModifier =
     lss_driver::CommandModifier::CurrentLimp(400);
 
+const BEDROOM_LIFTING_CURRENT_LIMIT: lss_driver::CommandModifier =
+    lss_driver::CommandModifier::CurrentLimp(1000);
+
 const SLIDING_SPEED: f32 = 340.0;
 
 const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
@@ -301,7 +304,7 @@ impl Blinds for BedroomBlinds {
         self.driver
             .set_rotation_speed_with_modifier(
                 self.config.motor_id,
-                SLIDING_SPEED,
+                -SLIDING_SPEED,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
@@ -319,8 +322,8 @@ impl Blinds for BedroomBlinds {
         self.driver
             .set_rotation_speed_with_modifier(
                 self.config.motor_id,
-                -SLIDING_SPEED,
-                SLIDING_CURRENT_LIMIT,
+                SLIDING_SPEED,
+                BEDROOM_LIFTING_CURRENT_LIMIT,
             )
             .await?;
         wait_until_motor_stopped(
