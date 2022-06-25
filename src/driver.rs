@@ -19,7 +19,7 @@ const SLIDING_SPEED: f32 = 340.0;
 
 const LIVING_ROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 const LIVING_ROOM_FLIPPER_TIMEOUT: Duration = Duration::from_secs(3);
-const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
+const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(3);
 
 #[async_trait]
 pub trait Blinds: Send {
