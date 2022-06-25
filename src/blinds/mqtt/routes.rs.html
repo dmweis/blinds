@@ -45,6 +45,8 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">mqtt_router</span>::{<span class="ident">RouteHandler</span>, <span class="ident">RouterError</span>};
@@ -83,6 +85,8 @@
                 .<span class="ident">close</span>()
                 .<span class="kw">await</span>
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RouterError::HandlerError</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+        } <span class="kw">else</span> {
+            <span class="macro">error!</span>(<span class="string">&quot;Unmatched path handler {topic}&quot;</span>);
         }
         <span class="prelude-val">Ok</span>(())
     }
