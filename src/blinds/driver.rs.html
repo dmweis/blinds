@@ -377,6 +377,9 @@
 <span id="372">372</span>
 <span id="373">373</span>
 <span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">config</span>::{<span class="ident">BedroomBlindsConfig</span>, <span class="ident">LivingRoomBlindsConfig</span>},
     <span class="ident">error</span>,
@@ -393,6 +396,9 @@
 
 <span class="kw">const</span> <span class="ident">SLIDING_CURRENT_LIMIT</span>: <span class="ident">lss_driver::CommandModifier</span> <span class="op">=</span>
     <span class="ident">lss_driver::CommandModifier::CurrentLimp</span>(<span class="number">400</span>);
+
+<span class="kw">const</span> <span class="ident">BEDROOM_LIFTING_CURRENT_LIMIT</span>: <span class="ident">lss_driver::CommandModifier</span> <span class="op">=</span>
+    <span class="ident">lss_driver::CommandModifier::CurrentLimp</span>(<span class="number">1000</span>);
 
 <span class="kw">const</span> <span class="ident">SLIDING_SPEED</span>: <span class="ident">f32</span> <span class="op">=</span> <span class="number">340.0</span>;
 
@@ -680,8 +686,8 @@
         <span class="self">self</span>.<span class="ident">driver</span>
             .<span class="ident">set_rotation_speed_with_modifier</span>(
                 <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
-                <span class="ident">SLIDING_SPEED</span>,
-                <span class="ident">SLIDING_CURRENT_LIMIT</span>,
+                <span class="op">-</span><span class="ident">SLIDING_SPEED</span>,
+                <span class="ident">BEDROOM_LIFTING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="ident">wait_until_motor_stopped</span>(
@@ -698,7 +704,7 @@
         <span class="self">self</span>.<span class="ident">driver</span>
             .<span class="ident">set_rotation_speed_with_modifier</span>(
                 <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">motor_id</span>,
-                <span class="op">-</span><span class="ident">SLIDING_SPEED</span>,
+                <span class="ident">SLIDING_SPEED</span>,
                 <span class="ident">SLIDING_CURRENT_LIMIT</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
