@@ -109,8 +109,51 @@
 <span id="104">104</span>
 <span id="105">105</span>
 <span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::routes</span>::{<span class="ident">BlindsHandler</span>, <span class="ident">SwitchHandler</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">config::MqttConfig</span>, <span class="ident">driver::Blinds</span>};
+<span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">mqtt_router::Router</span>;
 <span class="kw">use</span> <span class="ident">rumqttc</span>::{<span class="ident">AsyncClient</span>, <span class="ident">ConnAck</span>, <span class="ident">Event</span>, <span class="ident">Incoming</span>, <span class="ident">MqttOptions</span>, <span class="ident">Publish</span>, <span class="ident">QoS</span>, <span class="ident">SubscribeFilter</span>};
@@ -125,7 +168,7 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">start_mqtt_service</span>(
     <span class="ident">blinds</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Blinds</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">config</span>: <span class="ident">MqttConfig</span>,
-) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="ident">StatePublisher</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mqttoptions</span> <span class="op">=</span>
         <span class="ident">MqttOptions::new</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">client_id</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">broker_host</span>, <span class="ident">config</span>.<span class="ident">broker_port</span>);
     <span class="macro">info!</span>(<span class="string">&quot;Starting MQTT server with options {:?}&quot;</span>, <span class="ident">mqttoptions</span>);
@@ -162,58 +205,99 @@
         }
     });
 
-    <span class="ident">tokio::spawn</span>(<span class="kw">async</span> <span class="kw">move</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">Router::default</span>();
+    <span class="ident">tokio::spawn</span>({
+        <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">base_topic</span> <span class="op">=</span> <span class="ident">base_topic</span>.<span class="ident">clone</span>();
+        <span class="kw">async</span> <span class="kw">move</span> {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">Router::default</span>();
 
-        <span class="ident">router</span>
-            .<span class="ident">add_handler</span>(
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{base_topic}/#&quot;</span>),
-                <span class="ident">BlindsHandler::new</span>(<span class="ident">blinds</span>.<span class="ident">clone</span>()),
-            )
-            .<span class="ident">unwrap</span>();
-
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">switch_topic</span>) <span class="op">=</span> <span class="ident">config</span>.<span class="ident">switch_topic</span> {
             <span class="ident">router</span>
-                .<span class="ident">add_handler</span>(<span class="kw-2">&amp;</span><span class="ident">switch_topic</span>, <span class="ident">SwitchHandler::new</span>(<span class="ident">blinds</span>))
+                .<span class="ident">add_handler</span>(
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{base_topic}/#&quot;</span>),
+                    <span class="ident">BlindsHandler::new</span>(<span class="ident">blinds</span>.<span class="ident">clone</span>()),
+                )
                 .<span class="ident">unwrap</span>();
-        }
 
-        <span class="kw">let</span> <span class="ident">topics</span> <span class="op">=</span> <span class="ident">router</span>
-            .<span class="ident">topics_for_subscription</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">topic</span><span class="op">|</span> <span class="ident">SubscribeFilter</span> {
-                <span class="ident">path</span>: <span class="ident">topic</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">qos</span>: <span class="ident">QoS::AtMostOnce</span>,
-            });
-        <span class="ident">client</span>.<span class="ident">subscribe_many</span>(<span class="ident">topics</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">switch_topic</span>) <span class="op">=</span> <span class="ident">config</span>.<span class="ident">switch_topic</span> {
+                <span class="ident">router</span>
+                    .<span class="ident">add_handler</span>(<span class="kw-2">&amp;</span><span class="ident">switch_topic</span>, <span class="ident">SwitchHandler::new</span>(<span class="ident">blinds</span>))
+                    .<span class="ident">unwrap</span>();
+            }
 
-        <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">update</span> <span class="op">=</span> <span class="ident">message_receiver</span>.<span class="ident">recv</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
-            <span class="kw">match</span> <span class="ident">update</span> {
-                <span class="ident">MqttUpdate::Message</span>(<span class="ident">message</span>) =&gt; {
-                    <span class="kw">match</span> <span class="ident">router</span>
-                        .<span class="ident">handle_message_ignore_errors</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">topic</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">payload</span>)
-                        .<span class="kw">await</span>
-                    {
-                        <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;No handler for topic: \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">topic</span>),
-                        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; (),
-                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;Failed running handler with {:?}&quot;</span>, <span class="ident">e</span>),
+            <span class="kw">let</span> <span class="ident">topics</span> <span class="op">=</span> <span class="ident">router</span>
+                .<span class="ident">topics_for_subscription</span>()
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">topic</span><span class="op">|</span> <span class="ident">SubscribeFilter</span> {
+                    <span class="ident">path</span>: <span class="ident">topic</span>.<span class="ident">to_owned</span>(),
+                    <span class="ident">qos</span>: <span class="ident">QoS::AtMostOnce</span>,
+                });
+            <span class="ident">client</span>.<span class="ident">subscribe_many</span>(<span class="ident">topics</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+
+            <span class="kw">loop</span> {
+                <span class="kw">let</span> <span class="ident">update</span> <span class="op">=</span> <span class="ident">message_receiver</span>.<span class="ident">recv</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
+                <span class="kw">match</span> <span class="ident">update</span> {
+                    <span class="ident">MqttUpdate::Message</span>(<span class="ident">message</span>) =&gt; {
+                        <span class="kw">match</span> <span class="ident">router</span>
+                            .<span class="ident">handle_message_ignore_errors</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">topic</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">payload</span>)
+                            .<span class="kw">await</span>
+                        {
+                            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;No handler for topic: \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">topic</span>),
+                            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; (),
+                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;Failed running handler with {:?}&quot;</span>, <span class="ident">e</span>),
+                        }
                     }
-                }
-                <span class="ident">MqttUpdate::Reconnection</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">info!</span>(<span class="string">&quot;Reconnecting to broker&quot;</span>);
-                    <span class="kw">let</span> <span class="ident">topics</span> <span class="op">=</span> <span class="ident">router</span>
-                        .<span class="ident">topics_for_subscription</span>()
-                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">topic</span><span class="op">|</span> <span class="ident">SubscribeFilter</span> {
-                            <span class="ident">path</span>: <span class="ident">topic</span>.<span class="ident">to_owned</span>(),
-                            <span class="ident">qos</span>: <span class="ident">QoS::AtMostOnce</span>,
-                        });
-                    <span class="ident">client</span>.<span class="ident">subscribe_many</span>(<span class="ident">topics</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+                    <span class="ident">MqttUpdate::Reconnection</span>(<span class="kw">_</span>) =&gt; {
+                        <span class="macro">info!</span>(<span class="string">&quot;Reconnecting to broker&quot;</span>);
+                        <span class="kw">let</span> <span class="ident">topics</span> <span class="op">=</span>
+                            <span class="ident">router</span>
+                                .<span class="ident">topics_for_subscription</span>()
+                                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">topic</span><span class="op">|</span> <span class="ident">SubscribeFilter</span> {
+                                    <span class="ident">path</span>: <span class="ident">topic</span>.<span class="ident">to_owned</span>(),
+                                    <span class="ident">qos</span>: <span class="ident">QoS::AtMostOnce</span>,
+                                });
+                        <span class="ident">client</span>.<span class="ident">subscribe_many</span>(<span class="ident">topics</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+                    }
                 }
             }
         }
     });
 
-    <span class="prelude-val">Ok</span>(())
+    <span class="kw">let</span> <span class="ident">update_topic</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/state&quot;</span>, <span class="ident">base_topic</span>);
+    <span class="kw">let</span> <span class="ident">update_service</span> <span class="op">=</span> <span class="ident">StatePublisher::new</span>(<span class="ident">client</span>, <span class="ident">update_topic</span>);
+    <span class="prelude-val">Ok</span>(<span class="ident">update_service</span>)
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">serde::Serialize</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BlindsState</span> {
+    <span class="ident">Open</span>,
+    <span class="ident">Closed</span>,
+    <span class="ident">Opening</span>,
+    <span class="ident">Closing</span>,
+    <span class="ident">Other</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">serde::Serialize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">StateUpdate</span> {
+    <span class="ident">state</span>: <span class="ident">BlindsState</span>,
+}
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StatePublisher</span> {
+    <span class="ident">mqtt</span>: <span class="ident">AsyncClient</span>,
+    <span class="ident">update_topic</span>: <span class="ident">String</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">StatePublisher</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mqtt</span>: <span class="ident">AsyncClient</span>, <span class="ident">update_topic</span>: <span class="ident">String</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">mqtt</span>, <span class="ident">update_topic</span> }
+    }
+
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_state</span>: <span class="ident">BlindsState</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">update</span> <span class="op">=</span> <span class="ident">StateUpdate</span> { <span class="ident">state</span>: <span class="ident">new_state</span> };
+        <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">serde_json::to_vec</span>(<span class="kw-2">&amp;</span><span class="ident">update</span>).<span class="ident">unwrap</span>();
+        <span class="self">self</span>.<span class="ident">mqtt</span>
+            .<span class="ident">publish</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">update_topic</span>, <span class="ident">QoS::AtMostOnce</span>, <span class="bool-val">false</span>, <span class="ident">json</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="blinds" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.62.0 (a8314ef7d 2022-06-27)" ></div>

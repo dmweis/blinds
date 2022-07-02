@@ -249,11 +249,37 @@
 <span id="244">244</span>
 <span id="245">245</span>
 <span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{
     <span class="ident">wait_until_motor_stopped</span>, <span class="ident">Blinds</span>, <span class="ident">CALIBRATED_COLOR</span>, <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>,
     <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>, <span class="ident">SLIDING_CURRENT_LIMIT</span>, <span class="ident">SLIDING_SPEED</span>, <span class="ident">UNCALIBRATED_COLOR</span>,
 };
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">config::LivingRoomBlindsConfig</span>, <span class="ident">error</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">config::LivingRoomBlindsConfig</span>,
+    <span class="ident">error</span>,
+    <span class="ident">mqtt_server</span>::{<span class="ident">BlindsState</span>, <span class="ident">StatePublisher</span>},
+};
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
@@ -263,6 +289,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LivingRoomBlinds</span> {
     <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">LivingRoomBlindsConfig</span>,
     <span class="ident">driver</span>: <span class="ident">lss_driver::LSSDriver</span>,
+    <span class="ident">state_publisher</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StatePublisher</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">LivingRoomBlinds</span> {
@@ -272,6 +299,7 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">config</span>,
             <span class="ident">driver</span>: <span class="ident">serial_driver</span>,
+            <span class="ident">state_publisher</span>: <span class="prelude-val">None</span>,
         })
     }
 
@@ -455,6 +483,13 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">publish_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="ident">BlindsState</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">state_publisher</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">state_publisher</span> {
+            <span class="ident">state_publisher</span>.<span class="ident">update_state</span>(<span class="ident">state</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
@@ -468,19 +503,24 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">open</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">publish_state</span>(<span class="ident">BlindsState::Opening</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">flip_open</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">slide_open</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">publish_state</span>(<span class="ident">BlindsState::Open</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">publish_state</span>(<span class="ident">BlindsState::Closing</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">flip_open</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">slide_closed</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">flip_close_left</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">publish_state</span>(<span class="ident">BlindsState::Closed</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">calibrate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">config_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">publish_state</span>(<span class="ident">BlindsState::Other</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Starting calibration for living room blinds&quot;</span>);
         <span class="self">self</span>.<span class="ident">calibrate_flipper</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">flip_open</span>().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -493,6 +533,10 @@
 
     <span class="kw">fn</span> <span class="ident">needs_calibration</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_left</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">flip_motor_right</span>.<span class="ident">is_none</span>()
+    }
+
+    <span class="kw">fn</span> <span class="ident">set_state_publisher</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">state_publisher</span>: <span class="ident">StatePublisher</span>) {
+        <span class="self">self</span>.<span class="ident">state_publisher</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">state_publisher</span>)
     }
 }
 </code></pre></div>

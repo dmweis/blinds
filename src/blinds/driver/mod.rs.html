@@ -77,10 +77,13 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">bedroom_blinds</span>;
 <span class="kw">mod</span> <span class="ident">living_room_blinds</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mqtt_server::StatePublisher</span>;
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
@@ -115,6 +118,7 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">were_motors_rebooted</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>;
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">calibrate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">config_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
     <span class="kw">fn</span> <span class="ident">needs_calibration</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">set_state_publisher</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">state_publisher</span>: <span class="ident">StatePublisher</span>);
 }
 
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_until_motor_stopped</span>(
