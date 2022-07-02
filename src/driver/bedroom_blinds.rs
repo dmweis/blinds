@@ -74,6 +74,10 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
+        if matches!(self.state, BlindsState::Open) {
+            info!("Blinds already open");
+            return Ok(());
+        }
         self.set_state(BlindsState::Opening).await?;
         // make sure speed is limited
         self.driver
@@ -102,6 +106,10 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn close(&mut self) -> Result<()> {
+        if matches!(self.state, BlindsState::Closed) {
+            info!("Blinds already closed");
+            return Ok(());
+        }
         self.set_state(BlindsState::Closing).await?;
         // make sure speed is limited
         self.driver
