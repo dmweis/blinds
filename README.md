@@ -5,3 +5,7 @@
 [![Docs](https://img.shields.io/badge/-docs-brightgreen)](https://davidweis.dev/blinds/blinds/)
 
 Application for controlling of my smart blinds
+
+## TODO
+
+[] Split config and state saving logic between `/var/log/state` and `/etc/blinds/`.  
