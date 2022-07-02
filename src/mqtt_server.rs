@@ -1,5 +1,8 @@
 use super::routes::{BlindsHandler, SwitchHandler};
-use crate::{config::MqttConfig, driver::Blinds};
+use crate::{
+    config::MqttConfig,
+    driver::{Blinds, BlindsState},
+};
 use anyhow::Result;
 use log::*;
 use mqtt_router::Router;
@@ -111,16 +114,6 @@ pub fn start_mqtt_service(
     let update_topic = format!("{}/state", base_topic);
     let update_service = StatePublisher::new(client, update_topic);
     Ok(update_service)
-}
-
-#[derive(Debug, serde::Serialize, Clone, Copy)]
-#[serde(rename_all = "lowercase")]
-pub enum BlindsState {
-    Open,
-    Closed,
-    Opening,
-    Closing,
-    Other,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]

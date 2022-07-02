@@ -30,6 +30,16 @@ const BEDROOM_SLIDING_TIMEOUT: Duration = Duration::from_secs(20);
 const BEDROOM_DOOR_TOP_OFFSET: f32 = 100.0;
 const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4500.0;
 
+#[derive(Debug, serde::Serialize, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum BlindsState {
+    Open,
+    Closed,
+    Opening,
+    Closing,
+    Other,
+}
+
 #[async_trait]
 pub trait Blinds: Send {
     async fn open(&mut self) -> Result<()>;

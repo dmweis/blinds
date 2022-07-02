@@ -1,12 +1,8 @@
 use super::{
-    wait_until_motor_stopped, Blinds, CALIBRATED_COLOR, LIVING_ROOM_FLIPPER_TIMEOUT,
+    wait_until_motor_stopped, Blinds, BlindsState, CALIBRATED_COLOR, LIVING_ROOM_FLIPPER_TIMEOUT,
     LIVING_ROOM_SLIDING_TIMEOUT, SLIDING_CURRENT_LIMIT, SLIDING_SPEED, UNCALIBRATED_COLOR,
 };
-use crate::{
-    config::LivingRoomBlindsConfig,
-    error,
-    mqtt_server::{BlindsState, StatePublisher},
-};
+use crate::{config::LivingRoomBlindsConfig, error, mqtt_server::StatePublisher};
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
@@ -17,6 +13,7 @@ pub struct LivingRoomBlinds {
     pub config: LivingRoomBlindsConfig,
     driver: lss_driver::LSSDriver,
     state_publisher: Option<StatePublisher>,
+    state: BlindsState,
 }
 
 impl LivingRoomBlinds {
@@ -27,6 +24,7 @@ impl LivingRoomBlinds {
             config,
             driver: serial_driver,
             state_publisher: None,
+            state: BlindsState::Other,
         })
     }
 
@@ -211,7 +209,8 @@ impl LivingRoomBlinds {
         Ok(())
     }
 
-    async fn publish_state(&self, state: BlindsState) -> Result<()> {
+    async fn set_state(&mut self, state: BlindsState) -> Result<()> {
+        self.state = state;
         if let Some(ref state_publisher) = self.state_publisher {
             state_publisher.update_state(state).await?;
         }
@@ -230,24 +229,32 @@ impl Blinds for LivingRoomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
-        self.publish_state(BlindsState::Opening).await?;
+        if matches!(self.state, BlindsState::Open) {
+            info!("Blinds already open");
+            return Ok(());
+        }
+        self.set_state(BlindsState::Opening).await?;
         self.flip_open().await?;
         self.slide_open().await?;
-        self.publish_state(BlindsState::Open).await?;
+        self.set_state(BlindsState::Open).await?;
         Ok(())
     }
 
     async fn close(&mut self) -> Result<()> {
-        self.publish_state(BlindsState::Closing).await?;
+        if matches!(self.state, BlindsState::Closed) {
+            info!("Blinds already closed");
+            return Ok(());
+        }
+        self.set_state(BlindsState::Closing).await?;
         self.flip_open().await?;
         self.slide_closed().await?;
         self.flip_close_left().await?;
-        self.publish_state(BlindsState::Closed).await?;
+        self.set_state(BlindsState::Closed).await?;
         Ok(())
     }
 
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
-        self.publish_state(BlindsState::Other).await?;
+        self.set_state(BlindsState::Other).await?;
         info!("Starting calibration for living room blinds");
         self.calibrate_flipper().await?;
         self.flip_open().await?;
