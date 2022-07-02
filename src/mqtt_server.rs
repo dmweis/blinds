@@ -114,6 +114,7 @@ pub fn start_mqtt_service(
 }
 
 #[derive(Debug, serde::Serialize, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
 pub enum BlindsState {
     Open,
     Closed,
