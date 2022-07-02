@@ -122,10 +122,12 @@
 <span id="117">117</span>
 <span id="118">118</span>
 <span id="119">119</span>
+<span id="120">120</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">config</span>;
 <span class="kw">mod</span> <span class="ident">driver</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
-<span class="kw">mod</span> <span class="ident">mqtt</span>;
+<span class="kw">mod</span> <span class="ident">mqtt_server</span>;
+<span class="kw">mod</span> <span class="ident">routes</span>;
 
 <span class="kw">use</span> <span class="ident">actix_web</span>::{<span class="ident">middleware::Logger</span>, <span class="ident">post</span>, <span class="ident">web</span>, <span class="ident">App</span>, <span class="ident">HttpResponse</span>, <span class="ident">HttpServer</span>, <span class="ident">Responder</span>};
 <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
@@ -136,7 +138,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path::PathBuf</span>, <span class="ident">sync::Arc</span>};
 <span class="kw">use</span> <span class="ident">tokio::sync::Mutex</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mqtt::start_mqtt_service</span>;
+<span class="kw">use</span> <span class="ident">mqtt_server::start_mqtt_service</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Parser</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">author</span>, <span class="ident">version</span>, <span class="ident">about</span>, <span class="ident">long_about</span> <span class="op">=</span> <span class="prelude-val">None</span>)]</span>
@@ -242,5 +244,5 @@
     <span class="kw">fn</span> <span class="ident">empty_test</span>() {}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="blinds" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="blinds" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.62.0 (a8314ef7d 2022-06-27)" ></div>
 </body></html>

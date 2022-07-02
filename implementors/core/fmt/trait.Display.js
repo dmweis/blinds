@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["blinds"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.61.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"blinds/error/enum.DriverError.html\" title=\"enum blinds::error::DriverError\">DriverError</a>","synthetic":false,"types":["blinds::error::DriverError"]}];
+implementors["blinds"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.62.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"blinds/error/enum.DriverError.html\" title=\"enum blinds::error::DriverError\">DriverError</a>","synthetic":false,"types":["blinds::error::DriverError"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
