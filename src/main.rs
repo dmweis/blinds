@@ -1,7 +1,8 @@
 mod config;
 mod driver;
 mod error;
-mod mqtt;
+mod mqtt_server;
+mod routes;
 
 use actix_web::{middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
@@ -12,7 +13,7 @@ use log::*;
 use std::{path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
 
-use crate::mqtt::start_mqtt_service;
+use mqtt_server::start_mqtt_service;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
