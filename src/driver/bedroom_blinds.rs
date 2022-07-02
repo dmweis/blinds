@@ -3,7 +3,11 @@ use super::{
     BEDROOM_LIFTING_CURRENT_LIMIT, BEDROOM_SLIDING_TIMEOUT, CALIBRATED_COLOR,
     SLIDING_CURRENT_LIMIT, SLIDING_SPEED, UNCALIBRATED_COLOR,
 };
-use crate::{config::BedroomBlindsConfig, error};
+use crate::{
+    config::BedroomBlindsConfig,
+    error,
+    mqtt_server::{BlindsState, StatePublisher},
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
@@ -12,6 +16,7 @@ use std::path::Path;
 pub struct BedroomBlinds {
     pub config: BedroomBlindsConfig,
     driver: lss_driver::LSSDriver,
+    state_publisher: Option<StatePublisher>,
 }
 
 impl BedroomBlinds {
@@ -21,6 +26,7 @@ impl BedroomBlinds {
         Ok(Self {
             config,
             driver: serial_driver,
+            state_publisher: None,
         })
     }
 
@@ -51,6 +57,13 @@ impl BedroomBlinds {
         self.driver.limp(self.config.motor_id).await?;
         Ok(())
     }
+
+    async fn publish_state(&self, state: BlindsState) -> Result<()> {
+        if let Some(ref state_publisher) = self.state_publisher {
+            state_publisher.update_state(state).await?;
+        }
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -62,6 +75,7 @@ impl Blinds for BedroomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
+        self.publish_state(BlindsState::Opening).await?;
         // make sure speed is limited
         self.driver
             .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
@@ -84,10 +98,12 @@ impl Blinds for BedroomBlinds {
         )
         .await?;
         self.driver.limp(self.config.motor_id).await?;
+        self.publish_state(BlindsState::Open).await?;
         Ok(())
     }
 
     async fn close(&mut self) -> Result<()> {
+        self.publish_state(BlindsState::Closing).await?;
         // make sure speed is limited
         self.driver
             .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
@@ -109,10 +125,12 @@ impl Blinds for BedroomBlinds {
         )
         .await?;
         self.driver.limp(self.config.motor_id).await?;
+        self.publish_state(BlindsState::Closed).await?;
         Ok(())
     }
 
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
+        self.publish_state(BlindsState::Other).await?;
         info!("Starting calibration for bedroom blinds");
         self.open_until_limit().await?;
         let top_position = self.driver.query_position(self.config.motor_id).await?;
@@ -125,5 +143,9 @@ impl Blinds for BedroomBlinds {
 
     fn needs_calibration(&self) -> bool {
         self.config.top_position.is_none()
+    }
+
+    fn set_state_publisher(&mut self, state_publisher: StatePublisher) {
+        self.state_publisher = Some(state_publisher)
     }
 }

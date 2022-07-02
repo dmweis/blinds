@@ -2,6 +2,7 @@ mod bedroom_blinds;
 mod living_room_blinds;
 
 use crate::error;
+use crate::mqtt_server::StatePublisher;
 use anyhow::Result;
 use async_trait::async_trait;
 use std::time::Duration;
@@ -36,6 +37,7 @@ pub trait Blinds: Send {
     async fn were_motors_rebooted(&mut self) -> Result<bool>;
     async fn calibrate(&mut self, config_path: &Path) -> Result<()>;
     fn needs_calibration(&self) -> bool;
+    fn set_state_publisher(&mut self, state_publisher: StatePublisher);
 }
 
 pub async fn wait_until_motor_stopped(

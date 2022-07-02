@@ -2,7 +2,11 @@ use super::{
     wait_until_motor_stopped, Blinds, CALIBRATED_COLOR, LIVING_ROOM_FLIPPER_TIMEOUT,
     LIVING_ROOM_SLIDING_TIMEOUT, SLIDING_CURRENT_LIMIT, SLIDING_SPEED, UNCALIBRATED_COLOR,
 };
-use crate::{config::LivingRoomBlindsConfig, error};
+use crate::{
+    config::LivingRoomBlindsConfig,
+    error,
+    mqtt_server::{BlindsState, StatePublisher},
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use log::*;
@@ -12,6 +16,7 @@ use tokio::time::sleep;
 pub struct LivingRoomBlinds {
     pub config: LivingRoomBlindsConfig,
     driver: lss_driver::LSSDriver,
+    state_publisher: Option<StatePublisher>,
 }
 
 impl LivingRoomBlinds {
@@ -21,6 +26,7 @@ impl LivingRoomBlinds {
         Ok(Self {
             config,
             driver: serial_driver,
+            state_publisher: None,
         })
     }
 
@@ -204,6 +210,13 @@ impl LivingRoomBlinds {
             .await?;
         Ok(())
     }
+
+    async fn publish_state(&self, state: BlindsState) -> Result<()> {
+        if let Some(ref state_publisher) = self.state_publisher {
+            state_publisher.update_state(state).await?;
+        }
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -217,19 +230,24 @@ impl Blinds for LivingRoomBlinds {
     }
 
     async fn open(&mut self) -> Result<()> {
+        self.publish_state(BlindsState::Opening).await?;
         self.flip_open().await?;
         self.slide_open().await?;
+        self.publish_state(BlindsState::Open).await?;
         Ok(())
     }
 
     async fn close(&mut self) -> Result<()> {
+        self.publish_state(BlindsState::Closing).await?;
         self.flip_open().await?;
         self.slide_closed().await?;
         self.flip_close_left().await?;
+        self.publish_state(BlindsState::Closed).await?;
         Ok(())
     }
 
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
+        self.publish_state(BlindsState::Other).await?;
         info!("Starting calibration for living room blinds");
         self.calibrate_flipper().await?;
         self.flip_open().await?;
@@ -242,5 +260,9 @@ impl Blinds for LivingRoomBlinds {
 
     fn needs_calibration(&self) -> bool {
         self.config.flip_motor_left.is_none() || self.config.flip_motor_right.is_none()
+    }
+
+    fn set_state_publisher(&mut self, state_publisher: StatePublisher) {
+        self.state_publisher = Some(state_publisher)
     }
 }

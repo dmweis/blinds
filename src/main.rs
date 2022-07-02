@@ -96,8 +96,10 @@ async fn main() -> Result<()> {
     info!("Binding on address: {address}");
     let driver = Arc::new(Mutex::new(driver));
 
-    start_mqtt_service(driver.clone(), mqtt_config).expect("Failed to start mqtt server");
+    let state_publisher =
+        start_mqtt_service(driver.clone(), mqtt_config).expect("Failed to start mqtt server");
 
+    driver.lock().await.set_state_publisher(state_publisher);
     let driver = web::Data::from(driver);
 
     HttpServer::new(move || {
