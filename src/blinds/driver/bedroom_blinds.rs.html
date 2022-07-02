@@ -153,6 +153,14 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{
     <span class="ident">wait_until_motor_stopped</span>, <span class="ident">Blinds</span>, <span class="ident">BlindsState</span>, <span class="ident">BEDROOM_BLIND_BOTTOM_OFFSET</span>,
     <span class="ident">BEDROOM_DOOR_TOP_OFFSET</span>, <span class="ident">BEDROOM_LIFTING_CURRENT_LIMIT</span>, <span class="ident">BEDROOM_SLIDING_TIMEOUT</span>,
@@ -229,6 +237,10 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">open</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="macro">matches!</span>(<span class="self">self</span>.<span class="ident">state</span>, <span class="ident">BlindsState::Open</span>) {
+            <span class="macro">info!</span>(<span class="string">&quot;Blinds already open&quot;</span>);
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+        }
         <span class="self">self</span>.<span class="ident">set_state</span>(<span class="ident">BlindsState::Opening</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="comment">// make sure speed is limited</span>
         <span class="self">self</span>.<span class="ident">driver</span>
@@ -257,6 +269,10 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="macro">matches!</span>(<span class="self">self</span>.<span class="ident">state</span>, <span class="ident">BlindsState::Closed</span>) {
+            <span class="macro">info!</span>(<span class="string">&quot;Blinds already closed&quot;</span>);
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+        }
         <span class="self">self</span>.<span class="ident">set_state</span>(<span class="ident">BlindsState::Closing</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="comment">// make sure speed is limited</span>
         <span class="self">self</span>.<span class="ident">driver</span>
