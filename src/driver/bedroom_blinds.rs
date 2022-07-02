@@ -119,6 +119,7 @@ impl Blinds for BedroomBlinds {
         self.config.top_position = Some(top_position);
         self.config.save(config_path).await?;
         self.configure().await?;
+        self.open().await?;
         Ok(())
     }
 
