@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["BlindsState",""],["MqttUpdate",""]],"fn":[["start_mqtt_service",""]],"struct":[["StatePublisher",""],["StateUpdate",""]]});
+initSidebarItems({"enum":[["MqttUpdate",""]],"fn":[["start_mqtt_service",""]],"struct":[["StatePublisher",""],["StateUpdate",""]]});

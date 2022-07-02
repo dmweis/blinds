@@ -79,6 +79,16 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">bedroom_blinds</span>;
 <span class="kw">mod</span> <span class="ident">living_room_blinds</span>;
 
@@ -110,6 +120,16 @@
 
 <span class="kw">const</span> <span class="ident">BEDROOM_DOOR_TOP_OFFSET</span>: <span class="ident">f32</span> <span class="op">=</span> <span class="number">100.0</span>;
 <span class="kw">const</span> <span class="ident">BEDROOM_BLIND_BOTTOM_OFFSET</span>: <span class="ident">f32</span> <span class="op">=</span> <span class="number">4500.0</span>;
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">serde::Serialize</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;lowercase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BlindsState</span> {
+    <span class="ident">Open</span>,
+    <span class="ident">Closed</span>,
+    <span class="ident">Opening</span>,
+    <span class="ident">Closing</span>,
+    <span class="ident">Other</span>,
+}
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Blinds</span>: <span class="ident">Send</span> {

@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["blinds"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.62.0/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"enum\" href=\"blinds/mqtt_server/enum.BlindsState.html\" title=\"enum blinds::mqtt_server::BlindsState\">BlindsState</a>","synthetic":false,"types":["blinds::mqtt_server::BlindsState"]}];
+implementors["blinds"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.62.0/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"enum\" href=\"blinds/driver/enum.BlindsState.html\" title=\"enum blinds::driver::BlindsState\">BlindsState</a>","synthetic":false,"types":["blinds::driver::BlindsState"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
