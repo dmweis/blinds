@@ -36,6 +36,14 @@ impl RouteHandler for BlindsHandler {
                 .close()
                 .await
                 .map_err(|e| RouterError::HandlerError(e.into()))?;
+        } else if topic.ends_with("toggle") {
+            info!("Toggling blinds");
+            self.blinds
+                .lock()
+                .await
+                .toggle()
+                .await
+                .map_err(|e| RouterError::HandlerError(e.into()))?;
         } else {
             error!("Unmatched path handler {topic}");
         }

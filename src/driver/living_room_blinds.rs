@@ -253,6 +253,15 @@ impl Blinds for LivingRoomBlinds {
         Ok(())
     }
 
+    async fn toggle(&mut self) -> Result<()> {
+        info!("Toggling blinds");
+        match self.state {
+            BlindsState::Closed | BlindsState::Closing => self.open().await?,
+            BlindsState::Open | BlindsState::Opening | BlindsState::Other => self.close().await?,
+        }
+        Ok(())
+    }
+
     async fn calibrate(&mut self, config_path: &Path) -> Result<()> {
         self.set_state(BlindsState::Other).await?;
         info!("Starting calibration for living room blinds");

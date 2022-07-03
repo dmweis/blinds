@@ -44,6 +44,7 @@ pub enum BlindsState {
 pub trait Blinds: Send {
     async fn open(&mut self) -> Result<()>;
     async fn close(&mut self) -> Result<()>;
+    async fn toggle(&mut self) -> Result<()>;
     async fn were_motors_rebooted(&mut self) -> Result<bool>;
     async fn calibrate(&mut self, config_path: &Path) -> Result<()>;
     fn needs_calibration(&self) -> bool;
