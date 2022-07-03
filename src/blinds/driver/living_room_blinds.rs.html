@@ -278,6 +278,15 @@
 <span id="273">273</span>
 <span id="274">274</span>
 <span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{
     <span class="ident">wait_until_motor_stopped</span>, <span class="ident">Blinds</span>, <span class="ident">BlindsState</span>, <span class="ident">CALIBRATED_COLOR</span>, <span class="ident">LIVING_ROOM_FLIPPER_TIMEOUT</span>,
     <span class="ident">LIVING_ROOM_SLIDING_TIMEOUT</span>, <span class="ident">SLIDING_CURRENT_LIMIT</span>, <span class="ident">SLIDING_SPEED</span>, <span class="ident">UNCALIBRATED_COLOR</span>,
@@ -530,6 +539,15 @@
         <span class="self">self</span>.<span class="ident">slide_closed</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">flip_close_left</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">set_state</span>(<span class="ident">BlindsState::Closed</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">toggle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;Toggling blinds&quot;</span>);
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span> {
+            <span class="ident">BlindsState::Closed</span> <span class="op">|</span> <span class="ident">BlindsState::Closing</span> =&gt; <span class="self">self</span>.<span class="ident">open</span>().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="ident">BlindsState::Open</span> <span class="op">|</span> <span class="ident">BlindsState::Opening</span> <span class="op">|</span> <span class="ident">BlindsState::Other</span> =&gt; <span class="self">self</span>.<span class="ident">close</span>().<span class="kw">await</span><span class="question-mark">?</span>,
+        }
         <span class="prelude-val">Ok</span>(())
     }
 

@@ -108,6 +108,14 @@
 <span id="103">103</span>
 <span id="104">104</span>
 <span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::driver::Blinds</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
@@ -144,6 +152,14 @@
                 .<span class="ident">lock</span>()
                 .<span class="kw">await</span>
                 .<span class="ident">close</span>()
+                .<span class="kw">await</span>
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RouterError::HandlerError</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">topic</span>.<span class="ident">ends_with</span>(<span class="string">&quot;toggle&quot;</span>) {
+            <span class="macro">info!</span>(<span class="string">&quot;Toggling blinds&quot;</span>);
+            <span class="self">self</span>.<span class="ident">blinds</span>
+                .<span class="ident">lock</span>()
+                .<span class="kw">await</span>
+                .<span class="ident">toggle</span>()
                 .<span class="kw">await</span>
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RouterError::HandlerError</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
         } <span class="kw">else</span> {
