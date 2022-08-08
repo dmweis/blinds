@@ -47,12 +47,30 @@ impl LivingRoomBlinds {
     }
 
     pub async fn flip_open(&mut self) -> Result<()> {
+        let flip_motor_center = self
+            .config
+            .flip_motor_center()
+            .ok_or(error::DriverError::MissingMotorConfig)?;
+
+        let current_position = self
+            .driver
+            .query_position(self.config.flip_motor_id)
+            .await?;
+
+        let delta = (current_position - flip_motor_center).abs();
+        if delta < 3.0 {
+            info!(
+                "Flip motor already opened pose {} center {}",
+                current_position, flip_motor_center
+            );
+            self.driver.limp(self.config.flip_motor_id).await?;
+            return Ok(());
+        }
+
         self.driver
             .move_to_position_with_modifier(
                 self.config.flip_motor_id,
-                self.config
-                    .flip_motor_center()
-                    .ok_or(error::DriverError::MissingMotorConfig)?,
+                flip_motor_center,
                 SLIDING_CURRENT_LIMIT,
             )
             .await?;
