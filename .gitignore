@@ -1,3 +1,4 @@
 /target
+/mender_target
 dev_config/config.yaml
 .vscode
