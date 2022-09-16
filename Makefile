@@ -31,7 +31,7 @@ debug:
 .PHONY: build-artifact
 build-artifact: build
 	mkdir -p $(MENDER_ARTIFACT_OUTPUT_PATH)
-	rm -f $(MENDER_ARTIFACT_OUTPUT_PATH)
+	rm -f $(MENDER_ARTIFACT_OUTPUT_PATH)/*
 	mender-artifact write module-image --type deb --artifact-name $(MENDER_ARTIFACT_NAME) --device-type $(MENDER_DEVICE_TYPE) --output-path $(MENDER_ARTIFACT_OUTPUT_PATH)/$(MENDER_ARTIFACT_FILE) --file $(ARM_BUILD_PATH)
 
 .PHONY: install-dependencies
