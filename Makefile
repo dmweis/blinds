@@ -7,7 +7,6 @@ VERSION_TAG = $(shell cargo get version)
 
 MENDER_ARTIFACT_NAME ?= blinds-$(VERSION_TAG)
 MENDER_ARTIFACT_FILE ?= $(MENDER_ARTIFACT_NAME).mender
-MENDER_DEVICE_TYPE ?= raspberrypi4
 MENDER_ARTIFACT_OUTPUT_PATH := target/mender
 
 HOSTNAME = $(shell hostname).local
@@ -34,7 +33,7 @@ debug:
 build-artifact: build
 	mkdir -p $(MENDER_ARTIFACT_OUTPUT_PATH)
 	rm -f $(MENDER_ARTIFACT_OUTPUT_PATH)/*
-	mender-artifact write module-image --type deb --artifact-name $(MENDER_ARTIFACT_NAME) --device-type $(MENDER_DEVICE_TYPE) --output-path $(MENDER_ARTIFACT_OUTPUT_PATH)/$(MENDER_ARTIFACT_FILE) --file $(ARM_BUILD_PATH)
+	mender-artifact write module-image --type deb --artifact-name $(MENDER_ARTIFACT_NAME) --device-type raspberrypi4 --device-type raspberrypi3 --output-path $(MENDER_ARTIFACT_OUTPUT_PATH)/$(MENDER_ARTIFACT_FILE) --file $(ARM_BUILD_PATH)
 
 .PHONY: serve-artifact
 serve-artifact: build-artifact
