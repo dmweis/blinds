@@ -18,7 +18,7 @@ impl BlindsHandler {
 
 #[async_trait]
 impl RouteHandler for BlindsHandler {
-    async fn call(&mut self, topic: &str, _content: &[u8]) -> std::result::Result<(), RouterError> {
+    async fn call(&mut self, topic: &str, content: &[u8]) -> std::result::Result<(), RouterError> {
         info!("got mqtt message on {topic}");
         if topic.ends_with("open") {
             info!("Opening blinds");
@@ -44,6 +44,35 @@ impl RouteHandler for BlindsHandler {
                 .toggle()
                 .await
                 .map_err(|e| RouterError::HandlerError(e.into()))?;
+        } else if topic.ends_with("command") {
+            let blinds_command: BlindsCommand = serde_json::from_slice(content)
+                .map_err(|err| RouterError::HandlerError(err.into()))?;
+            match blinds_command.action {
+                BlindsAction::Close => {
+                    self.blinds
+                        .lock()
+                        .await
+                        .close()
+                        .await
+                        .map_err(|e| RouterError::HandlerError(e.into()))?;
+                }
+                BlindsAction::Open => {
+                    self.blinds
+                        .lock()
+                        .await
+                        .open()
+                        .await
+                        .map_err(|e| RouterError::HandlerError(e.into()))?;
+                }
+                BlindsAction::Toggle => {
+                    self.blinds
+                        .lock()
+                        .await
+                        .toggle()
+                        .await
+                        .map_err(|e| RouterError::HandlerError(e.into()))?;
+                }
+            }
         } else {
             error!("Unmatched path handler {topic}");
         }
@@ -110,4 +139,17 @@ pub struct SwitchPayload {
     pub linkquality: f32,
     #[allow(dead_code)]
     pub voltage: f32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BlindsAction {
+    Open,
+    Close,
+    Toggle,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BlindsCommand {
+    pub action: BlindsAction,
 }
