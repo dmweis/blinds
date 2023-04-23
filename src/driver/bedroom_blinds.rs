@@ -117,19 +117,19 @@ impl Blinds for BedroomBlinds {
             .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
             .await?;
 
-        let open = self
+        let open_position = self
             .config
             .top_position
             .ok_or(error::DriverError::MissingMotorConfig)?
             + BEDROOM_DOOR_TOP_OFFSET;
 
-        let closed = self
+        let closed_position = self
             .config
             .top_position
             .ok_or(error::DriverError::MissingMotorConfig)?
             + BEDROOM_BLIND_BOTTOM_OFFSET;
 
-        let desired_position = closed + open * (open - closed);
+        let desired_position = closed_position + open * (open_position - closed_position);
 
         // top of bedroom is a bit away from the place where we stop for current limit
         self.driver
