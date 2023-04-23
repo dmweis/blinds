@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"blinds":[["impl RouteHandler for <a class=\"struct\" href=\"blinds/routes/struct.BlindsHandler.html\" title=\"struct blinds::routes::BlindsHandler\">BlindsHandler</a>"],["impl RouteHandler for <a class=\"struct\" href=\"blinds/routes/struct.SwitchHandler.html\" title=\"struct blinds::routes::SwitchHandler\">SwitchHandler</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

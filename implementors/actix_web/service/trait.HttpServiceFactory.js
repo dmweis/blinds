@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"blinds":[["impl HttpServiceFactory for <a class=\"struct\" href=\"blinds/struct.close_blinds_handler.html\" title=\"struct blinds::close_blinds_handler\">close_blinds_handler</a>"],["impl HttpServiceFactory for <a class=\"struct\" href=\"blinds/struct.open_blinds_handler.html\" title=\"struct blinds::open_blinds_handler\">open_blinds_handler</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
