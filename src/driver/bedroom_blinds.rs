@@ -105,6 +105,51 @@ impl Blinds for BedroomBlinds {
         Ok(())
     }
 
+    async fn partial_open(&mut self, open: f32) -> Result<()> {
+        if !(0.0..=1.0).contains(&open) {
+            error!("Open has to be between 0.0 and 1.0, got {}", open);
+            return Err(error::DriverError::PartialPositionOutOfRange.into());
+        }
+        self.set_state(BlindsState::Opening).await?;
+
+        // make sure speed is limited
+        self.driver
+            .set_maximum_speed(self.config.motor_id, SLIDING_SPEED)
+            .await?;
+
+        let open_position = self
+            .config
+            .top_position
+            .ok_or(error::DriverError::MissingMotorConfig)?
+            + BEDROOM_DOOR_TOP_OFFSET;
+
+        let closed_position = self
+            .config
+            .top_position
+            .ok_or(error::DriverError::MissingMotorConfig)?
+            + BEDROOM_BLIND_BOTTOM_OFFSET;
+
+        let desired_position = closed_position + open * (open_position - closed_position);
+
+        // top of bedroom is a bit away from the place where we stop for current limit
+        self.driver
+            .move_to_position_with_modifier(
+                self.config.motor_id,
+                desired_position,
+                BEDROOM_LIFTING_CURRENT_LIMIT,
+            )
+            .await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.motor_id,
+            BEDROOM_SLIDING_TIMEOUT,
+        )
+        .await?;
+        self.driver.limp(self.config.motor_id).await?;
+        self.set_state(BlindsState::Partial).await?;
+        Ok(())
+    }
+
     async fn close(&mut self) -> Result<()> {
         if matches!(self.state, BlindsState::Closed) {
             info!("Blinds already closed");
@@ -140,7 +185,10 @@ impl Blinds for BedroomBlinds {
         info!("Toggling blinds");
         match self.state {
             BlindsState::Closed | BlindsState::Closing => self.open().await?,
-            BlindsState::Open | BlindsState::Opening | BlindsState::Other => self.close().await?,
+            BlindsState::Open
+            | BlindsState::Opening
+            | BlindsState::Other
+            | BlindsState::Partial => self.close().await?,
         }
         Ok(())
     }

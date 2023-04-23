@@ -13,4 +13,6 @@ pub enum DriverError {
     BothRoomConfigsPresent,
     #[error("waiting for stop timed out")]
     WaitingForStopTimedOut,
+    #[error("partial position out of range")]
+    PartialPositionOutOfRange,
 }
