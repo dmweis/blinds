@@ -1,0 +1,12 @@
+---
+living_room_blinds: ~
+bedroom_blinds:
+  serial_port: /dev/ttyUSB0
+  motor_id: 1
+  top_position: -4495.0
+  mqtt:
+    base_route: bedroom/blinds
+    broker_host: homepi
+    broker_port: 1883
+    client_id: bedroom_blinds
+    switch_topic: ~

@@ -1,0 +1,14 @@
+---
+living_room_blinds:
+  serial_port: /dev/ttyUSB0
+  slide_motor_id: 1
+  flip_motor_id: 2
+  flip_motor_left: -125.7
+  flip_motor_right: 1029.7
+  mqtt:
+    base_route: living_room/blinds
+    broker_host: homepi
+    broker_port: 1883
+    client_id: living_room_blinds
+    switch_topic: ~
+bedroom_blinds: ~
