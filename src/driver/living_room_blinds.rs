@@ -105,8 +105,8 @@ impl LivingRoomBlinds {
     }
 
     pub async fn flip_partial_left(&mut self, open: f32) -> Result<()> {
-        if open.abs() > 1.0 {
-            error!("Open has to be between -1.0 and 1.0, got {}", open);
+        if !(0.0..=1.0).contains(&open) {
+            error!("Open has to be between 0.0 and 1.0, got {}", open);
             return Err(error::DriverError::PartialPositionOutOfRange.into());
         }
 
