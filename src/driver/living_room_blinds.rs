@@ -104,6 +104,56 @@ impl LivingRoomBlinds {
         Ok(())
     }
 
+    pub async fn flip_partial_left(&mut self, open: f32) -> Result<()> {
+        if open.abs() > 1.0 {
+            error!("Open has to be between -1.0 and 1.0, got {}", open);
+            return Err(error::DriverError::PartialPositionOutOfRange.into());
+        }
+
+        let flip_motor_center = self
+            .config
+            .flip_motor_center()
+            .ok_or(error::DriverError::MissingMotorConfig)?;
+
+        let fully_closed = self
+            .config
+            .flip_motor_left
+            .ok_or(error::DriverError::MissingMotorConfig)?;
+
+        let desired_position = fully_closed + open * (flip_motor_center - fully_closed);
+
+        let current_position = self
+            .driver
+            .query_position(self.config.flip_motor_id)
+            .await?;
+
+        let delta = (current_position - desired_position).abs();
+        if delta < 3.0 {
+            info!(
+                "Flip motor already partially opened current pose {} desired {}",
+                current_position, desired_position
+            );
+            self.driver.limp(self.config.flip_motor_id).await?;
+            return Ok(());
+        }
+
+        self.driver
+            .move_to_position_with_modifier(
+                self.config.flip_motor_id,
+                desired_position,
+                SLIDING_CURRENT_LIMIT,
+            )
+            .await?;
+        wait_until_motor_stopped(
+            &mut self.driver,
+            self.config.flip_motor_id,
+            LIVING_ROOM_FLIPPER_TIMEOUT,
+        )
+        .await?;
+        self.driver.limp(self.config.flip_motor_id).await?;
+        Ok(())
+    }
+
     #[allow(dead_code)]
     // TODO(David): I don't think I want to do this almost ever
     pub async fn flip_close_right(&mut self) -> Result<()> {
@@ -258,6 +308,23 @@ impl Blinds for LivingRoomBlinds {
         Ok(())
     }
 
+    async fn partial_open(&mut self, open: f32) -> Result<()> {
+        self.set_state(BlindsState::Opening).await?;
+        match self.state {
+            BlindsState::Open => {
+                self.flip_open().await?;
+                self.slide_closed().await?;
+            }
+            BlindsState::Closed => {
+                self.flip_open().await?;
+            }
+            _ => (),
+        }
+        self.flip_partial_left(open).await?;
+        self.set_state(BlindsState::Partial).await?;
+        Ok(())
+    }
+
     async fn close(&mut self) -> Result<()> {
         if matches!(self.state, BlindsState::Closed) {
             info!("Blinds already closed");
@@ -275,7 +342,10 @@ impl Blinds for LivingRoomBlinds {
         info!("Toggling blinds");
         match self.state {
             BlindsState::Closed | BlindsState::Closing => self.open().await?,
-            BlindsState::Open | BlindsState::Opening | BlindsState::Other => self.close().await?,
+            BlindsState::Open
+            | BlindsState::Opening
+            | BlindsState::Other
+            | BlindsState::Partial => self.close().await?,
         }
         Ok(())
     }

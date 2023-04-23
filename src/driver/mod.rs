@@ -34,6 +34,7 @@ const BEDROOM_BLIND_BOTTOM_OFFSET: f32 = 4500.0;
 #[serde(rename_all = "lowercase")]
 pub enum BlindsState {
     Open,
+    Partial,
     Closed,
     Opening,
     Closing,
@@ -43,6 +44,12 @@ pub enum BlindsState {
 #[async_trait]
 pub trait Blinds: Send {
     async fn open(&mut self) -> Result<()>;
+    /// Open the blinds to a given percentage
+    ///
+    /// # Arguments
+    ///
+    /// * `open` - number between 0.0 and 1.0 with 1.0 being full open
+    async fn partial_open(&mut self, open: f32) -> Result<()>;
     async fn close(&mut self) -> Result<()>;
     async fn toggle(&mut self) -> Result<()>;
     async fn were_motors_rebooted(&mut self) -> Result<bool>;

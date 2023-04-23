@@ -105,6 +105,11 @@ impl Blinds for BedroomBlinds {
         Ok(())
     }
 
+    async fn partial_open(&mut self, _open: f32) -> Result<()> {
+        error!("Bedroom blinds do not support partial open");
+        Ok(())
+    }
+
     async fn close(&mut self) -> Result<()> {
         if matches!(self.state, BlindsState::Closed) {
             info!("Blinds already closed");
@@ -140,7 +145,10 @@ impl Blinds for BedroomBlinds {
         info!("Toggling blinds");
         match self.state {
             BlindsState::Closed | BlindsState::Closing => self.open().await?,
-            BlindsState::Open | BlindsState::Opening | BlindsState::Other => self.close().await?,
+            BlindsState::Open
+            | BlindsState::Opening
+            | BlindsState::Other
+            | BlindsState::Partial => self.close().await?,
         }
         Ok(())
     }

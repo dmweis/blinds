@@ -36,6 +36,19 @@ impl RouteHandler for BlindsHandler {
                 .close()
                 .await
                 .map_err(|e| RouterError::HandlerError(e.into()))?;
+        } else if topic.ends_with("partial") {
+            info!("Opening blinds partially");
+            let message_content =
+                std::str::from_utf8(content).map_err(|e| RouterError::HandlerError(e.into()))?;
+            let open = message_content
+                .parse::<f32>()
+                .map_err(|e| RouterError::HandlerError(e.into()))?;
+            self.blinds
+                .lock()
+                .await
+                .partial_open(open)
+                .await
+                .map_err(|e| RouterError::HandlerError(e.into()))?;
         } else if topic.ends_with("toggle") {
             info!("Toggling blinds");
             self.blinds
@@ -69,6 +82,14 @@ impl RouteHandler for BlindsHandler {
                         .lock()
                         .await
                         .toggle()
+                        .await
+                        .map_err(|e| RouterError::HandlerError(e.into()))?;
+                }
+                BlindsAction::Partial { open } => {
+                    self.blinds
+                        .lock()
+                        .await
+                        .partial_open(open)
                         .await
                         .map_err(|e| RouterError::HandlerError(e.into()))?;
                 }
@@ -147,6 +168,7 @@ pub enum BlindsAction {
     Open,
     Close,
     Toggle,
+    Partial { open: f32 },
 }
 
 #[derive(Debug, Deserialize)]
